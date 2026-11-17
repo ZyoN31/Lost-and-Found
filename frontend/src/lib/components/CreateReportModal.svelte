@@ -1,0 +1,247 @@
+<script lang="ts">
+  import { CATEGORIES, CAMPUS_ZONES } from "$lib/api";
+  import { toasts } from "$lib/toast.svelte";
+  import { createEventDispatcher } from "svelte";
+  import { api } from "$lib/api";
+
+  const dispatch = createEventDispatcher<{ close: void; created: { item: any } }>();
+
+  let { open = $bindable(false) } = $props();
+
+  let tipo = $state<"perdido" | "encontrado">("perdido");
+  let titulo = $state("");
+  let categoria = $state(CATEGORIES[0]);
+  let ubicacion = $state(CAMPUS_ZONES[1]); // Zona UD1 by default
+  let descripcion = $state("");
+  let file = $state<File | null>(null);
+  let previewUrl = $state("");
+  let isSubmitting = $state(false);
+  let errors = $state<Record<string, string>>({});
+
+  function reset(): void {
+    tipo = "perdido";
+    titulo = "";
+    categoria = CATEGORIES[0];
+    ubicacion = CAMPUS_ZONES[1];
+    descripcion = "";
+    file = null;
+    previewUrl = "";
+    errors = {};
+    isSubmitting = false;
+  }
+
+  $effect(() => {
+    if (!open) reset();
+  });
+
+  function validate(): boolean {
+    const errs: Record<string, string> = {};
+    const t = titulo.trim();
+    const d = descripcion.trim();
+    if (t.length < 3) errs.titulo = "El título debe tener al menos 3 caracteres";
+    if (d.length < 10) errs.descripcion = "La descripción debe tener al menos 10 caracteres";
+    if (file) {
+      if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+        errs.foto = "Formato no permitido. Usa JPG, PNG o WEBP";
+      } else if (file.size > 5 * 1024 * 1024) {
+        errs.foto = "La imagen supera los 5 MB";
+      }
+    }
+    errors = errs;
+    return Object.keys(errs).length === 0;
+  }
+
+  function handleFile(incoming: File | null): void {
+    if (!incoming) return;
+    previewUrl = URL.createObjectURL(incoming);
+    file = incoming;
+  }
+
+  function handleDrop(e: DragEvent): void {
+    e.preventDefault();
+    const dropped = e.dataTransfer?.files?.[0];
+    if (dropped) handleFile(dropped);
+  }
+
+  function handleInputChange(e: Event): void {
+    const target = e.currentTarget as HTMLInputElement;
+    const selected = target.files?.[0];
+    if (selected) handleFile(selected);
+  }
+
+  async function handleSubmit(): Promise<void> {
+    if (!validate()) return;
+    isSubmitting = true;
+    try {
+      const fd = new FormData();
+      fd.append("titulo", titulo.trim());
+      fd.append("estado", tipo);
+      fd.append("categoria", categoria);
+      fd.append("ubicacion", ubicacion);
+      fd.append("descripcion_publica", descripcion.trim());
+      if (file) fd.append("foto", file);
+      const { item } = await api.createItem(fd);
+      toasts.add(item ? "Reporte publicado." : "Reporte creado.", "success");
+      dispatch("created", { item });
+      dispatch("close");
+    } catch (err: any) {
+      toasts.add(err?.message ?? "No se pudo publicar el reporte.", "error");
+    } finally {
+      isSubmitting = false;
+    }
+  }
+</script>
+
+{#if open}
+  <div
+    class="fixed inset-0 z-[60] flex items-end justify-center sm:items-center"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="create-title"
+  >
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm animate-overlay-in" onclick={() => dispatch("close")}></div>
+    <div
+      class="relative mx-4 mb-4 w-full max-w-lg animate-modal-in overflow-hidden rounded-3xl border border-[#ECECEC] bg-[#FFFFFF] shadow-2xl sm:mb-0"
+    >
+      <div class="flex items-center justify-between border-b border-[#ECECEC] px-6 py-4">
+        <h2 id="create-title" class="font-display text-xl font-bold text-black">
+          Nuevo Reporte
+        </h2>
+        <button
+          type="button"
+          aria-label="Cerrar"
+          class="rounded-full p-1.5 text-[#666666] hover:bg-[#F5F5F7] hover:text-black focus-porple transition-colors"
+          onclick={() => dispatch("close")}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
+      </div>
+
+      <form onsubmit={(e) => { e.preventDefault(); handleSubmit(); }} class="max-h-[85vh] overflow-y-auto px-6 py-5">
+        <div class="mb-5 inline-flex items-center gap-2 rounded-full bg-[#F5F5F7] p-1">
+          <button
+            type="button"
+            class={`rounded-full px-4 py-2 font-display text-sm font-semibold transition-all ${tipo === "perdido" ? "bg-[#000000] text-white shadow-sm" : "text-[#555555] hover:text-black"}`}
+            onclick={() => (tipo = "perdido")}
+          >
+            Perdí una pertenencia
+          </button>
+          <button
+            type="button"
+            class={`rounded-full px-4 py-2 font-display text-sm font-semibold transition-all ${tipo === "encontrado" ? "bg-[#000000] text-white shadow-sm" : "text-[#555555] hover:text-black"}`}
+            onclick={() => (tipo = "encontrado")}
+          >
+            Encontré un objeto
+          </button>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label for="titulo" class="block font-display text-xs font-semibold text-[#333333] mb-1">
+              Título del objeto
+            </label>
+            <input
+              id="titulo"
+              type="text"
+              class="w-full rounded-full border border-transparent bg-[#F5F5F7] px-4 py-2.5 text-sm text-black outline-none placeholder:text-[#999999] transition-colors focus:border-[#4F1F91] focus:ring-2 focus:ring-[#4F1F91]/30"
+              placeholder="Ej. Cargador de laptop"
+              bind:value={titulo}
+              aria-describedby={errors.titulo ? "titulo-error" : undefined}
+            />
+            {#if errors.titulo}
+              <p id="titulo-error" class="mt-1 text-xs text-[#DC2626]">{errors.titulo}</p>
+            {/if}
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="categoria" class="block font-display text-xs font-semibold text-[#333333] mb-1">
+                Categoría
+              </label>
+              <select id="categoria" bind:value={categoria} class="w-full rounded-full border border-transparent bg-[#F5F5F7] px-4 py-2.5 text-sm text-black outline-none focus:border-[#4F1F91] focus:ring-2 focus:ring-[#4F1F91]/30">
+                {#each CATEGORIES as c (c)}
+                  <option value={c}>{c}</option>
+                {/each}
+              </select>
+            </div>
+            <div>
+              <label for="ubicacion" class="block font-display text-xs font-semibold text-[#333333] mb-1">
+                Ubicación en Campus
+              </label>
+              <select id="ubicacion" bind:value={ubicacion} class="w-full rounded-full border border-transparent bg-[#F5F5F7] px-4 py-2.5 text-sm text-black outline-none focus:border-[#4F1F91] focus:ring-2 focus:ring-[#4F1F91]/30">
+                {#each CAMPUS_ZONES.slice(1) as z (z)}
+                  <option value={z}>{z}</option>
+                {/each}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label for="descripcion" class="block font-display text-xs font-semibold text-[#333333] mb-1">
+              Descripción pública
+            </label>
+            <textarea
+              id="descripcion"
+              rows="3"
+              class="w-full resize-none rounded-2xl border border-transparent bg-[#F5F5F7] px-4 py-2.5 text-sm text-black outline-none placeholder:text-[#999999] transition-colors focus:border-[#4F1F91] focus:ring-2 focus:ring-[#4F1F91]/30"
+              placeholder="¿Dónde lo viste por última vez? Añade detalles que ayuden a reconocerlo."
+              bind:value={descripcion}
+              aria-describedby={errors.descripcion ? "descripcion-error" : undefined}
+            ></textarea>
+            {#if errors.descripcion}
+              <p id="descripcion-error" class="mt-1 text-xs text-[#DC2626]">{errors.descripcion}</p>
+            {/if}
+          </div>
+
+          <div>
+            <p class="mb-1 font-display text-xs font-semibold text-[#333333]">Fotografía del objeto</p>
+            <div
+              class={`relative flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed transition-colors ${previewUrl ? "border-[#4F1F91] bg-white" : "border-[#ECECEC] bg-[#F5F5F7]"} p-3`}
+              ondragover={(e) => e.preventDefault()}
+              ondrop={handleDrop}
+            >
+              {#if previewUrl}
+                <img src={previewUrl} alt="Vista previa" class="max-h-44 w-full rounded-xl object-contain shadow-sm" />
+                <div class="flex items-center gap-2">
+                  <span class="truncate max-w-[12rem] font-display text-xs text-[#333333]">{file?.name ?? "Imagen"}</span>
+                  <button type="button" class="text-xs text-[#330085] hover:underline" onclick={() => { file = null; previewUrl = ""; }}>Cambiar</button>
+                </div>
+              {:else}
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V9" /><path d="M8.5 12.5 12 9l3.5 3.5" /><path d="M20 16.5A4 4 0 0 0 17 9h-1" /><path d="M6 16a4 4 0 0 1 4-4" /></svg>
+                <div class="text-center">
+                  <p class="font-display text-sm font-medium text-[#333333]">Arrastra una imagen o haz clic para subir</p>
+                  <p class="mt-1 text-xs text-[#999999]">JPG, PNG o WEBP · Máx. 5 MB</p>
+                </div>
+                <label class="mt-1 inline-flex cursor-pointer rounded-full bg-[#000000] px-4 py-1.5 font-display text-xs font-semibold text-white hover:bg-[#330085] focus-within:ring-2 focus-within:ring-[#4F1F91] transition-colors">
+                  Subir foto
+                  <input type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" onchange={handleInputChange} />
+                </label>
+              {/if}
+            </div>
+            {#if errors.foto}
+              <p class="mt-1 text-xs text-[#DC2626]">{errors.foto}</p>
+            {/if}
+          </div>
+        </div>
+
+        <div class="sticky bottom-0 mt-4 flex flex-col-reverse gap-2 border-t border-[#ECECEC] bg-[#FFFFFF]/95 backdrop-blur pt-3 sm:flex-row sm:items-center sm:justify-end">
+          <button
+            type="button"
+            class="rounded-full border border-transparent bg-[#F5F5F7] px-5 py-2.5 font-display text-sm font-semibold text-[#555555] hover:bg-[#ECECEC] focus-porple transition-colors"
+            onclick={() => dispatch("close")}
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-[#000000] px-6 py-2.5 font-display text-sm font-semibold text-white hover:bg-[#330085] focus-porple transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={isSubmitting}
+          >
+            {#if isSubmitting}<span class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>{/if}
+            Publicar reporte
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+{/if}

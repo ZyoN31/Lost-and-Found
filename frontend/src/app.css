@@ -1,0 +1,129 @@
+@import "tailwindcss";
+
+@theme {
+  --font-brand: "IBM Plex Serif", "Iowan Old Style", Georgia, serif;
+  --font-body: "Marcellus", "IBM Plex Serif", Georgia, serif;
+  --font-display: "LINE Seed JP", "Inter", "Helvetica Neue", Arial, system-ui, sans-serif;
+
+  --color-ink: #000000;
+  --color-base: #ffffff;
+  --color-surface: #ececec;
+  --color-surface-soft: #f5f5f7;
+  --color-maganata: #330085;
+  --color-porple: #4f1f91;
+
+  --color-perdido-bg: #fef2f2;
+  --color-perdido-fg: #dc2626;
+  --color-encontrado-bg: #fffbeb;
+  --color-encontrado-fg: #d97706;
+  --color-devuelto-bg: #ecfdf5;
+  --color-devuelto-fg: #059669;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #ffffff;
+  color: #000000;
+  font-family: "Marcellus", "IBM Plex Serif", Georgia, serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.font-brand {
+  font-family: var(--font-brand);
+}
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* Subtle dotted grid used behind the feed hero, matching the mockups. */
+.dotted-grid {
+  background-image: radial-gradient(#d4d4d8 0.9px, transparent 0.9px);
+  background-size: 22px 22px;
+  background-position: -8px -8px;
+}
+
+/* Focus ring shared by interactive controls. */
+.focus-porple:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #4f1f91;
+}
+
+.purple-glow {
+  box-shadow: 0 18px 40px -22px rgba(79, 31, 145, 0.55);
+}
+
+/* Scrollbar refinement for comment threads. */
+.thin-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #d4d4d8 transparent;
+}
+.thin-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background-color: #d4d4d8;
+  border-radius: 9999px;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-toast-in {
+  animation: toast-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-modal-in {
+  animation: modal-in 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-overlay-in {
+  animation: overlay-in 0.18s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-toast-in,
+  .animate-modal-in,
+  .animate-overlay-in {
+    animation: none;
+  }
+}
