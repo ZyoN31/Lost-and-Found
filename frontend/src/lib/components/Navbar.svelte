@@ -50,21 +50,21 @@
           Volver al feed
         </a>
       {/if}
-      <a
-        href="/feed?create=1"
-        class="hidden rounded-full bg-[#000000] px-4 py-2 font-display text-xs font-semibold text-white no-underline transition-colors hover:bg-[#330085] focus-porple sm:inline-flex"
-      >
-        + Crear Reporte
-      </a>
-      {#if auth.user?.rol === "admin" && active !== "admin"}
-        <a
-          href="/admin"
-          class="hidden rounded-full border border-[#ECECEC] bg-white px-3 py-1.5 font-display text-xs font-semibold text-[#333333] no-underline transition-colors hover:border-[#4F1F91] hover:text-[#330085] md:inline-flex focus-porple"
-        >
-          Moderación
-        </a>
-      {/if}
       {#if auth.user}
+        <a
+          href="/feed?create=1"
+          class="hidden rounded-full bg-[#000000] px-4 py-2 font-display text-xs font-semibold text-white no-underline transition-colors hover:bg-[#330085] focus-porple sm:inline-flex"
+        >
+          + Crear Reporte
+        </a>
+        {#if auth.user.rol === "admin" && active !== "admin"}
+          <a
+            href="/admin"
+            class="hidden rounded-full border border-[#ECECEC] bg-white px-3 py-1.5 font-display text-xs font-semibold text-[#333333] no-underline transition-colors hover:border-[#4F1F91] hover:text-[#330085] md:inline-flex focus-porple"
+          >
+            Moderación
+          </a>
+        {/if}
         <a
           href="/profile"
           class={`flex items-center gap-2 rounded-full border no-underline transition-all hover:border-[#4F1F91] hover:shadow-sm ${
@@ -83,6 +83,19 @@
           <span class="hidden max-w-[9rem] truncate font-display text-[11px] font-medium text-[#333333] sm:inline">
             {auth.user.nombre_completo}
           </span>
+        </a>
+      {:else}
+        <a
+          href="/login"
+          class="rounded-full border border-[#ECECEC] bg-white px-3 py-2 font-display text-xs font-semibold text-[#333333] no-underline transition-colors hover:border-[#4F1F91] hover:text-[#330085] sm:px-4"
+        >
+          Iniciar sesión
+        </a>
+        <a
+          href="/login?mode=register"
+          class="rounded-full bg-[#000000] px-3 py-2 font-display text-xs font-semibold text-white no-underline transition-colors hover:bg-[#330085] sm:px-4"
+        >
+          Crear cuenta
         </a>
       {/if}
     </div>

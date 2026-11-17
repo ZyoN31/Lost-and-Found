@@ -161,7 +161,7 @@
 
         <div class="mt-5 space-y-3">
           {#if loading}
-            {#each [1, 2, 3] as _ (Math.random())}
+            {#each [0, 1, 2] as skeleton (skeleton)}
               <div class="h-24 animate-pulse rounded-2xl bg-[#F5F5F7]"></div>
             {/each}
           {:else if filteredReports.length === 0}

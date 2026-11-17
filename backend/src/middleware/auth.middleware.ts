@@ -87,3 +87,52 @@ export function requireAdmin(
 
   next();
 }
+
+// Like `authenticate`, but never rejects: attach the user when a valid token
+// is present, otherwise continue as an anonymous visitor. Used for public
+// read-only endpoints that behave the same for guests and members.
+export async function optionalAuth(
+  req: AuthenticatedRequest,
+  _res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const authHeader = req.headers.authorization;
+    const bearerToken =
+      authHeader && authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : null;
+    const cookieToken = req.cookies?.token as string | undefined;
+    const token = bearerToken || cookieToken;
+
+    if (!token) {
+      next();
+      return;
+    }
+
+    const decoded = jwt.verify(token, env.jwtSecret) as AuthenticatedUser;
+    if (!decoded?.id || !ObjectId.isValid(decoded.id)) {
+      next();
+      return;
+    }
+
+    const users = database.getUsersCollection();
+    const userDoc = await users.findOne(
+      { _id: new ObjectId(decoded.id) },
+      { projection: { password_hash: 0 } }
+    );
+
+    if (!userDoc || !userDoc.activo) {
+      next();
+      return;
+    }
+
+    req.user = {
+      id: userDoc._id.toString(),
+      correo: userDoc.correo,
+      rol: userDoc.rol,
+      nombre_completo: userDoc.nombre_completo,
+    };
+    next();
+  } catch {
+    next();
+  }
+}

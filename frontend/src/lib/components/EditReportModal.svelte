@@ -3,16 +3,19 @@
   import { toasts } from "$lib/toast.svelte";
   import type { Item } from "$lib/types";
   import ConfirmDialog from "./ConfirmDialog.svelte";
+  import CustomSelect from "./CustomSelect.svelte";
 
   import { createEventDispatcher } from "svelte";
 
   const dispatch = createEventDispatcher<{ close: void; updated: { item: Item }; deleted: void }>();
 
+  const ZONE_OPTIONS = CAMPUS_ZONES.slice(1);
+
   let { open = $bindable(false), item = null as Item | null } = $props();
 
   let titulo = $state("");
-  let categoria = $state(CATEGORIES[0]);
-  let ubicacion = $state(CAMPUS_ZONES[1]);
+  let categoria = $state<string>(CATEGORIES[0]);
+  let ubicacion = $state<string>(CAMPUS_ZONES[1]);
   let descripcion = $state("");
   let newFile = $state<File | null>(null);
   let previewUrl = $state("");
@@ -24,7 +27,7 @@
     if (item && open) {
       titulo = item.titulo;
       categoria = item.categoria;
-      ubicacion = item.ubicacion as (typeof CAMPUS_ZONES)[number];
+      ubicacion = item.ubicacion;
       descripcion = item.descripcion_publica;
       previewUrl = item.foto_url ?? "";
       newFile = null;
@@ -70,7 +73,7 @@
       const { item: updated } = await api.updateItem(item.id, fd);
       toasts.add("Reporte actualizado.", "success");
       dispatch("updated", { item: updated });
-      dispatch("close");
+      close();
     } catch (err: any) {
       toasts.add(err?.message ?? "No se pudo actualizar el reporte.", "error");
     } finally {
@@ -85,7 +88,7 @@
       await api.deleteItem(item.id);
       toasts.add("Reporte eliminado.", "success");
       dispatch("deleted");
-      dispatch("close");
+      close();
     } catch (err: any) {
       toasts.add(err?.message ?? "No se pudo eliminar el reporte.", "error");
     } finally {
@@ -93,27 +96,56 @@
       confirmOpen = false;
     }
   }
+
+  function close(): void {
+    open = false;
+    dispatch("close");
+  }
+
+  function handleWindowKeydown(event: KeyboardEvent): void {
+    if (open && !confirmOpen && event.key === "Escape") close();
+  }
+
+  // Lock body scroll while the modal is open
+  $effect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  });
 </script>
+
+<svelte:window onkeydown={handleWindowKeydown} />
 
 {#if open && item}
   <div class="fixed inset-0 z-[60] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-labelledby="edit-title">
-    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm animate-overlay-in" onclick={() => dispatch("close")}></div>
+    <button
+      type="button"
+      aria-label="Cerrar"
+      class="absolute inset-0 cursor-default bg-black/60 backdrop-blur-sm animate-overlay-in outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#4F1F91]"
+      onclick={(event) => {
+        if (event.target === event.currentTarget) close();
+      }}
+    ></button>
     <div class="relative mx-4 mb-4 w-full max-w-lg animate-modal-in overflow-hidden rounded-3xl border border-[#ECECEC] bg-white shadow-2xl sm:mb-0">
       <div class="flex items-center justify-between border-b border-[#ECECEC] px-6 py-4">
-        <h2 id="edit-title" class="font-display text-xl font-bold text-black">Editar Reporte</h2>
+        <div>
+          <h2 id="edit-title" class="font-display text-xl font-bold text-black">Editar Reporte</h2>
+          <p class="mt-0.5 text-xs text-[#666666]">Actualiza los detalles de tu publicación.</p>
+        </div>
         <button
           type="button"
           aria-label="Cerrar"
-          class="rounded-full p-1.5 text-[#666666] hover:bg-[#F5F5F7] hover:text-black focus-porple transition-colors"
-          onclick={() => dispatch("close")}
+          class="rounded-full bg-[#F5F5F7] p-2 text-[#666666] hover:bg-[#ECECEC] hover:text-black focus-porple transition-colors"
+          onclick={close}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
       </div>
 
       <form onsubmit={(e) => { e.preventDefault(); handleSave(); }} class="max-h-[85vh] overflow-y-auto px-6 py-5">
-        <p class="mb-4 text-sm text-[#666666]">Actualiza los detalles de tu publicación.</p>
-
         <div class="space-y-3">
           <div>
             <label for="edit-titulo" class="block font-display text-xs font-semibold text-[#333333] mb-1">Título del objeto</label>
@@ -129,15 +161,11 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label for="edit-categoria" class="block font-display text-xs font-semibold text-[#333333] mb-1">Categoría</label>
-              <select id="edit-categoria" bind:value={categoria} class="w-full rounded-full border border-transparent bg-[#F5F5F7] px-4 py-2.5 text-sm text-black outline-none focus:border-[#4F1F91] focus:ring-2 focus:ring-[#4F1F91]/30">
-                {#each CATEGORIES as c (c)}<option value={c}>{c}</option>{/each}
-              </select>
+              <CustomSelect id="edit-categoria" ariaLabel="Categoría" options={[...CATEGORIES]} bind:value={categoria} />
             </div>
             <div>
               <label for="edit-ubicacion" class="block font-display text-xs font-semibold text-[#333333] mb-1">Ubicación en Campus</label>
-              <select id="edit-ubicacion" bind:value={ubicacion} class="w-full rounded-full border border-transparent bg-[#F5F5F7] px-4 py-2.5 text-sm text-black outline-none focus:border-[#4F1F91] focus:ring-2 focus:ring-[#4F1F91]/30">
-                {#each CAMPUS_ZONES.slice(1) as z (z)}<option value={z}>{z}</option>{/each}
-              </select>
+              <CustomSelect id="edit-ubicacion" ariaLabel="Ubicación en Campus" options={ZONE_OPTIONS} bind:value={ubicacion} />
             </div>
           </div>
 
@@ -174,7 +202,7 @@
           <button
             type="button"
             class="rounded-full bg-[#F5F5F7] px-5 py-2.5 font-display text-sm font-semibold text-[#555555] hover:bg-[#ECECEC] transition-colors"
-            onclick={() => dispatch("close")}
+            onclick={close}
           >
             Cancelar
           </button>

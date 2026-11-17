@@ -3,15 +3,18 @@
   import { toasts } from "$lib/toast.svelte";
   import { createEventDispatcher } from "svelte";
   import { api } from "$lib/api";
+  import CustomSelect from "./CustomSelect.svelte";
 
   const dispatch = createEventDispatcher<{ close: void; created: { item: any } }>();
 
   let { open = $bindable(false) } = $props();
 
+  const ZONE_OPTIONS = CAMPUS_ZONES.slice(1);
+
   let tipo = $state<"perdido" | "encontrado">("perdido");
   let titulo = $state("");
-  let categoria = $state(CATEGORIES[0]);
-  let ubicacion = $state(CAMPUS_ZONES[1]); // Zona UD1 by default
+  let categoria = $state<string>(CATEGORIES[0]);
+  let ubicacion = $state<string>(CAMPUS_ZONES[1]); // Zona UD1 by default
   let descripcion = $state("");
   let file = $state<File | null>(null);
   let previewUrl = $state("");
@@ -83,14 +86,35 @@
       const { item } = await api.createItem(fd);
       toasts.add(item ? "Reporte publicado." : "Reporte creado.", "success");
       dispatch("created", { item });
-      dispatch("close");
+      close();
     } catch (err: any) {
       toasts.add(err?.message ?? "No se pudo publicar el reporte.", "error");
     } finally {
       isSubmitting = false;
     }
   }
+
+  function close(): void {
+    open = false;
+    dispatch("close");
+  }
+
+  function handleWindowKeydown(event: KeyboardEvent): void {
+    if (open && event.key === "Escape") close();
+  }
+
+  // Lock body scroll while the modal is open
+  $effect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  });
 </script>
+
+<svelte:window onkeydown={handleWindowKeydown} />
 
 {#if open}
   <div
@@ -99,36 +123,46 @@
     aria-modal="true"
     aria-labelledby="create-title"
   >
-    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm animate-overlay-in" onclick={() => dispatch("close")}></div>
+    <button
+      type="button"
+      aria-label="Cerrar"
+      class="absolute inset-0 cursor-default bg-black/60 backdrop-blur-sm animate-overlay-in outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#4F1F91]"
+      onclick={(event) => {
+        if (event.target === event.currentTarget) close();
+      }}
+    ></button>
     <div
       class="relative mx-4 mb-4 w-full max-w-lg animate-modal-in overflow-hidden rounded-3xl border border-[#ECECEC] bg-[#FFFFFF] shadow-2xl sm:mb-0"
     >
       <div class="flex items-center justify-between border-b border-[#ECECEC] px-6 py-4">
-        <h2 id="create-title" class="font-display text-xl font-bold text-black">
-          Nuevo Reporte
-        </h2>
+        <div>
+          <h2 id="create-title" class="font-display text-xl font-bold text-black">
+            Nuevo Reporte
+          </h2>
+          <p class="mt-0.5 text-xs text-[#666666]">Cada detalle ayuda a encontrar a su dueño.</p>
+        </div>
         <button
           type="button"
           aria-label="Cerrar"
-          class="rounded-full p-1.5 text-[#666666] hover:bg-[#F5F5F7] hover:text-black focus-porple transition-colors"
-          onclick={() => dispatch("close")}
+          class="rounded-full bg-[#F5F5F7] p-2 text-[#666666] hover:bg-[#ECECEC] hover:text-black focus-porple transition-colors"
+          onclick={close}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
       </div>
 
       <form onsubmit={(e) => { e.preventDefault(); handleSubmit(); }} class="max-h-[85vh] overflow-y-auto px-6 py-5">
-        <div class="mb-5 inline-flex items-center gap-2 rounded-full bg-[#F5F5F7] p-1">
+        <div class="mb-5 grid grid-cols-2 gap-1.5 rounded-full bg-[#F5F5F7] p-1.5">
           <button
             type="button"
-            class={`rounded-full px-4 py-2 font-display text-sm font-semibold transition-all ${tipo === "perdido" ? "bg-[#000000] text-white shadow-sm" : "text-[#555555] hover:text-black"}`}
+            class={`flex items-center justify-center rounded-full px-4 py-2 text-center font-display text-sm font-semibold transition-all ${tipo === "perdido" ? "bg-[#000000] text-white shadow-sm" : "text-[#555555] hover:text-black"}`}
             onclick={() => (tipo = "perdido")}
           >
             Perdí una pertenencia
           </button>
           <button
             type="button"
-            class={`rounded-full px-4 py-2 font-display text-sm font-semibold transition-all ${tipo === "encontrado" ? "bg-[#000000] text-white shadow-sm" : "text-[#555555] hover:text-black"}`}
+            class={`flex items-center justify-center rounded-full px-4 py-2 text-center font-display text-sm font-semibold transition-all ${tipo === "encontrado" ? "bg-[#000000] text-white shadow-sm" : "text-[#555555] hover:text-black"}`}
             onclick={() => (tipo = "encontrado")}
           >
             Encontré un objeto
@@ -158,21 +192,13 @@
               <label for="categoria" class="block font-display text-xs font-semibold text-[#333333] mb-1">
                 Categoría
               </label>
-              <select id="categoria" bind:value={categoria} class="w-full rounded-full border border-transparent bg-[#F5F5F7] px-4 py-2.5 text-sm text-black outline-none focus:border-[#4F1F91] focus:ring-2 focus:ring-[#4F1F91]/30">
-                {#each CATEGORIES as c (c)}
-                  <option value={c}>{c}</option>
-                {/each}
-              </select>
+              <CustomSelect id="categoria" ariaLabel="Categoría" options={[...CATEGORIES]} bind:value={categoria} />
             </div>
             <div>
               <label for="ubicacion" class="block font-display text-xs font-semibold text-[#333333] mb-1">
                 Ubicación en Campus
               </label>
-              <select id="ubicacion" bind:value={ubicacion} class="w-full rounded-full border border-transparent bg-[#F5F5F7] px-4 py-2.5 text-sm text-black outline-none focus:border-[#4F1F91] focus:ring-2 focus:ring-[#4F1F91]/30">
-                {#each CAMPUS_ZONES.slice(1) as z (z)}
-                  <option value={z}>{z}</option>
-                {/each}
-              </select>
+              <CustomSelect id="ubicacion" ariaLabel="Ubicación en Campus" options={ZONE_OPTIONS} bind:value={ubicacion} />
             </div>
           </div>
 
@@ -197,6 +223,8 @@
             <p class="mb-1 font-display text-xs font-semibold text-[#333333]">Fotografía del objeto</p>
             <div
               class={`relative flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed transition-colors ${previewUrl ? "border-[#4F1F91] bg-white" : "border-[#ECECEC] bg-[#F5F5F7]"} p-3`}
+              role="region"
+              aria-label="Zona para subir la fotografía del objeto"
               ondragover={(e) => e.preventDefault()}
               ondrop={handleDrop}
             >
@@ -228,7 +256,7 @@
           <button
             type="button"
             class="rounded-full border border-transparent bg-[#F5F5F7] px-5 py-2.5 font-display text-sm font-semibold text-[#555555] hover:bg-[#ECECEC] focus-porple transition-colors"
-            onclick={() => dispatch("close")}
+            onclick={close}
           >
             Cancelar
           </button>

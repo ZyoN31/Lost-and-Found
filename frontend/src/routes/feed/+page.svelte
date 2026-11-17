@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { goto } from "$app/navigation";
   import { page } from "$app/stores";
   import { api, CAMPUS_ZONES, CATEGORIES } from "$lib/api";
   import { auth } from "$lib/auth.svelte";
@@ -27,12 +26,6 @@
   let confirmReturn = $state<{ open: boolean; item: Item | null }>({ open: false, item: null });
 
 
-  const tabs: { label: string; value: ItemStatus }[] = [
-    { label: "Perdidos", value: "perdido" },
-    { label: "Encontrados", value: "encontrado" },
-    { label: "Devueltos", value: "entregado" },
-  ];
-
   let activeTab = $state<ItemStatus>("perdido");
 
   let lastEditId = "";
@@ -41,7 +34,13 @@
   $effect(() => {
     const tab = $page.url.searchParams.get("tab") as ItemStatus | null;
     activeTab = tab === "encontrado" || tab === "entregado" ? tab : "perdido";
-    if ($page.url.searchParams.get("create") === "1") createOpen = true;
+    if ($page.url.searchParams.get("create") === "1") {
+      if (auth.isAuthenticated) {
+        createOpen = true;
+      } else {
+        toasts.add("Inicia sesión para publicar un reporte.", "info");
+      }
+    }
 
     const editId = $page.url.searchParams.get("editId");
     if (editId && editId !== lastEditId) {
@@ -114,10 +113,13 @@
   };
 
   const copy = $derived(heroCopy[activeTab]);
+
+  const canManageItem = (item: Item): boolean =>
+    !!auth.user && (auth.user.rol === "admin" || item.usuario_id === auth.user.id);
 </script>
 
 <svelte:head>
-  <title>Lost & Found · Feed UPEMOR</title>
+  <title>Lost & Found</title>
 </svelte:head>
 
 <div class="min-h-screen bg-white">
@@ -159,13 +161,15 @@
             {/each}
           </ul>
         </div>
+      </aside>
 
-        <div>
-          <h2 class="font-display text-base font-bold text-black">Categoría</h2>
-          <div class="mt-4 flex flex-wrap gap-2">
+      <!-- Feed -->
+      <section>
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div class="inline-flex flex-wrap items-center gap-1.5">
             <button
               type="button"
-              class={`rounded-full border px-3 py-1 font-display text-xs font-medium transition-colors ${categoria === "Todos" ? "border-[#000000] bg-[#000000] text-white" : "border-[#ECECEC] bg-white text-[#333333] hover:border-[#4F1F91]"}`}
+              class={`rounded-full px-3.5 py-1.5 font-display text-xs font-semibold transition-colors ${categoria === "Todos" ? "bg-[#000000] text-white" : "bg-[#F5F5F7] text-[#333333] hover:bg-[#ECECEC]"}`}
               onclick={() => (categoria = "Todos")}
             >
               Todos
@@ -173,60 +177,34 @@
             {#each CATEGORIES as cat (cat)}
               <button
                 type="button"
-                class={`rounded-full border px-3 py-1 font-display text-xs font-medium transition-colors ${categoria === cat ? "border-[#000000] bg-[#000000] text-white" : "border-[#ECECEC] bg-white text-[#333333] hover:border-[#4F1F91]"}`}
+                class={`rounded-full px-3.5 py-1.5 font-display text-xs font-semibold transition-colors ${categoria === cat ? "bg-[#000000] text-white" : "bg-[#F5F5F7] text-[#333333] hover:bg-[#ECECEC]"}`}
                 onclick={() => (categoria = cat)}
               >
                 {cat}
               </button>
             {/each}
           </div>
-        </div>
-      </aside>
-
-      <!-- Feed -->
-      <section>
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div class="inline-flex items-center gap-1 rounded-full bg-[#F5F5F7] p-1">
-            {#each tabs as tab (tab.value)}
-              <button
-                type="button"
-                class={`rounded-full px-4 py-1.5 font-display text-xs font-semibold transition-all ${activeTab === tab.value ? "bg-[#000000] text-white" : "text-[#555555] hover:text-black"}`}
-                onclick={() => {
-                  activeTab = tab.value;
-                  const url = new URL(window.location.href);
-                  url.searchParams.set("tab", tab.value === "perdido" ? "perdido" : tab.value);
-                  goto(url.toString(), { replaceState: true });
-                }}
-              >
-                {tab.label}
-              </button>
-            {/each}
+          <div class="flex items-center gap-2 rounded-full border border-[#ECECEC] bg-white px-4 py-2 lg:w-72">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999999" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+            <input
+              type="text"
+              placeholder="Buscar pertenencia…"
+              class="min-w-0 flex-1 bg-transparent text-sm text-black outline-none placeholder:text-[#A0A0A0]"
+              bind:value={search}
+            />
           </div>
-          <button
-            type="button"
-            class="inline-flex items-center gap-2 rounded-full bg-[#000000] px-5 py-2 font-display text-xs font-semibold text-white hover:bg-[#330085] focus-porple transition-colors"
-            onclick={() => (createOpen = true)}
-          >
-            <span>+</span> Crear Reporte
-          </button>
         </div>
 
-        <div class="mt-4 flex items-center gap-3 rounded-full border border-[#ECECEC] bg-white px-4 py-2">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999999" stroke-width="2"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
-          <input
-            type="text"
-            placeholder="Buscar pertenencia…"
-            class="min-w-0 flex-1 bg-transparent text-sm text-black outline-none placeholder:text-[#A0A0A0]"
-            bind:value={search}
-            oninput={() => load()}
-          />
+        <div class="mt-5 flex items-center justify-between gap-3">
+          <p class="font-display text-xs font-semibold uppercase tracking-widest text-[#330085]">{copy.label}</p>
+          {#if !loading}
+            <p class="font-display text-xs text-[#666666]">{items.length} {items.length === 1 ? "reporte" : "reportes"} · Más recientes primero</p>
+          {/if}
         </div>
-
-        <p class="mt-4 font-display text-xs font-semibold uppercase tracking-widest text-[#330085]">{copy.label}</p>
 
         {#if loading}
           <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {#each Array.from({ length: 6 }) as _ (crypto.randomUUID())}
+            {#each [0, 1, 2, 3, 4, 5] as skeleton (skeleton)}
               <div class="h-72 animate-pulse rounded-3xl bg-[#F5F5F7]"></div>
             {/each}
           </div>
@@ -239,11 +217,12 @@
         {:else}
           <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {#each items as item (item.id)}
+              {@const canManage = canManageItem(item)}
               <ItemCard
                 item={item}
-                onEdit={() => { editingItem = item; editOpen = true; }}
-                onDelete={() => (confirmDelete = { open: true, item })}
-                onMarkReturned={() => (confirmReturn = { open: true, item })}
+                onEdit={canManage ? () => { editingItem = item; editOpen = true; } : undefined}
+                onDelete={canManage ? () => (confirmDelete = { open: true, item }) : undefined}
+                onMarkReturned={canManage ? () => (confirmReturn = { open: true, item }) : undefined}
                 onView={() => { detailItem = item; detailOpen = true; }}
               />
             {/each}

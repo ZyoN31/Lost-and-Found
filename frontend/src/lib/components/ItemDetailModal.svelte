@@ -83,7 +83,7 @@
       await api.deleteItem(item.id);
       toasts.add("Reporte eliminado.", "success");
       dispatch("deleted");
-      dispatch("close");
+      close();
     } catch (err: any) {
       toasts.add(err?.message ?? "No se pudo eliminar el reporte.", "error");
     } finally {
@@ -102,11 +102,42 @@
       ...(withTime ? { hour: "2-digit", minute: "2-digit" } : { year: "numeric" }),
     });
   }
+
+  function close(): void {
+    open = false;
+    dispatch("close");
+  }
+
+  function handleWindowKeydown(event: KeyboardEvent): void {
+    if (!open || event.key !== "Escape") return;
+    // Let the inline confirmation dialogs take precedence on Escape
+    if (confirmReturnOpen || confirmDeleteOpen || pendingComment) return;
+    close();
+  }
+
+  // Lock body scroll while the modal is open
+  $effect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  });
 </script>
+
+<svelte:window onkeydown={handleWindowKeydown} />
 
 {#if open && item}
   <div class="fixed inset-0 z-[60] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-labelledby="detail-title">
-    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm animate-overlay-in" onclick={() => dispatch("close")}></div>
+    <button
+      type="button"
+      aria-label="Cerrar"
+      class="absolute inset-0 cursor-default bg-black/60 backdrop-blur-sm animate-overlay-in outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#4F1F91]"
+      onclick={(event) => {
+        if (event.target === event.currentTarget) close();
+      }}
+    ></button>
 
     <div class="relative mx-3 mb-3 w-full max-w-3xl animate-modal-in overflow-hidden rounded-3xl border border-[#ECECEC] bg-white shadow-2xl sm:mx-4 sm:mb-0">
       <div class="grid max-h-[92vh] grid-cols-1 overflow-y-auto sm:max-h-[86vh] sm:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] thin-scroll">
@@ -141,7 +172,7 @@
               </p>
               <h2 id="detail-title" class="mt-1 font-display text-2xl font-bold leading-tight text-black">{item.titulo}</h2>
             </div>
-            <button type="button" aria-label="Cerrar" class="rounded-full p-1.5 text-[#666666] hover:bg-[#F5F5F7] hover:text-black focus-porple transition-colors" onclick={() => dispatch("close")}>
+            <button type="button" aria-label="Cerrar" class="rounded-full bg-[#F5F5F7] p-2 text-[#666666] hover:bg-[#ECECEC] hover:text-black focus-porple transition-colors" onclick={close}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" /></svg>
             </button>
           </div>
@@ -160,7 +191,7 @@
             </div>
           </div>
 
-          {#if isOwner}
+          {#if isOwner || isAdmin}
             <div class="flex flex-wrap gap-2 px-6 pb-4">
               <button type="button" class="rounded-full bg-[#F5F5F7] px-4 py-2 font-display text-xs font-semibold text-[#333333] hover:bg-[#ECECEC] focus-porple transition-colors" onclick={() => dispatch("edit", { item })}>Editar</button>
               <button type="button" class="rounded-full bg-[#FEF2F2] px-4 py-2 font-display text-xs font-semibold text-[#DC2626] hover:bg-[#FEE2E2] focus-porple transition-colors" onclick={() => (confirmDeleteOpen = true)}>Eliminar</button>
@@ -172,7 +203,7 @@
 
           <div class="flex items-center justify-between border-t border-[#ECECEC] px-6 pt-4">
             <h3 class="font-display text-sm font-bold text-black">Comentarios</h3>
-            <span class="font-display text-[11px] text-[#666666]">{comments.length} {comments.length === 1 ? "en vivo" : "en vivo"}</span>
+            <span class="font-display text-[11px] text-[#666666]">{comments.length} {comments.length === 1 ? "comentario" : "comentarios"}</span>
           </div>
 
           <div class="min-h-0 flex-1 space-y-3 overflow-y-auto px-6 py-4 thin-scroll">
@@ -208,6 +239,16 @@
               <div class="flex items-center justify-center gap-2 rounded-xl bg-[#ECFDF5] px-3 py-2.5 text-[#059669]">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
                 <p class="font-display text-xs font-semibold">Comentarios cerrados · Objeto devuelto a su dueño</p>
+              </div>
+            {:else if !currentUserId}
+              <div class="flex items-center justify-between gap-3 rounded-2xl bg-[#F5F5F7] px-4 py-3">
+                <p class="font-display text-xs text-[#555555]">Inicia sesión para comentar este reporte.</p>
+                <a
+                  href="/login"
+                  class="shrink-0 rounded-full bg-[#000000] px-4 py-2 font-display text-[11px] font-semibold text-white no-underline transition-colors hover:bg-[#330085]"
+                >
+                  Iniciar sesión
+                </a>
               </div>
             {:else}
               <form

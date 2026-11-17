@@ -9,21 +9,21 @@ import {
   markItemReturned,
   updateItem,
 } from "../controllers/items.controller.js";
-import { authenticate } from "../middleware/auth.middleware.js";
+import { authenticate, optionalAuth } from "../middleware/auth.middleware.js";
 import { handleSingleImageUpload } from "../middleware/upload.middleware.js";
 
 const router = Router();
 
-router.use(authenticate);
+// Read-only endpoints are public: anonymous visitors may browse the feed.
+// Anything that mutates data requires a valid session.
+router.get("/", optionalAuth, getItems);
+router.get("/:id", optionalAuth, getItemById);
+router.post("/", authenticate, handleSingleImageUpload("foto"), createItem);
+router.put("/:id", authenticate, handleSingleImageUpload("foto"), updateItem);
+router.patch("/:id/status", authenticate, markItemReturned);
+router.delete("/:id", authenticate, deleteItem);
 
-router.get("/", getItems);
-router.get("/:id", getItemById);
-router.post("/", handleSingleImageUpload("foto"), createItem);
-router.put("/:id", handleSingleImageUpload("foto"), updateItem);
-router.patch("/:id/status", markItemReturned);
-router.delete("/:id", deleteItem);
-
-router.post("/:id/comments", addComment);
-router.delete("/:id/comments/:commentId", deleteComment);
+router.post("/:id/comments", authenticate, addComment);
+router.delete("/:id/comments/:commentId", authenticate, deleteComment);
 
 export default router;

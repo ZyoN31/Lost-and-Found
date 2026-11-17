@@ -10,6 +10,7 @@ class AuthStore {
   token = $state<string | null>(null);
   loading = $state(false);
   error = $state<string | null>(null);
+  private loadMePromise: Promise<void> | null = null;
 
   constructor() {
     this.restoreFromStorage();
@@ -27,8 +28,8 @@ class AuthStore {
         this.token = raw;
         api.setToken(raw);
         this.loadMe().catch(() => {
-          // token stale
-          this.clear();
+          // Only a rejected 401 clears the session (handled inside loadMe).
+          // Transient network/5xx failures keep the token and retry next load.
         });
       }
     } catch {
@@ -51,17 +52,30 @@ class AuthStore {
 
   async loadMe(): Promise<void> {
     if (!this.token) return;
+    // Dedupe concurrent calls (constructor + layout onMount both fire)
+    if (this.loadMePromise) return this.loadMePromise;
+
     this.loading = true;
     this.error = null;
-    try {
-      const { user } = await api.me();
-      this.user = user;
-    } catch (err: any) {
-      this.clearStorage();
-      throw err;
-    } finally {
-      this.loading = false;
-    }
+    this.loadMePromise = (async () => {
+      try {
+        const { user } = await api.me();
+        this.user = user;
+      } catch (err: any) {
+        // Only an explicit 401/expired token invalidates the session.
+        // Anything else (offline, 5xx, timeout) keeps the token on disk.
+        if (err?.status === 401) {
+          this.clearStorage();
+        } else {
+          this.error = err?.message ?? "No se pudo validar la sesión.";
+        }
+        throw err;
+      } finally {
+        this.loading = false;
+        this.loadMePromise = null;
+      }
+    })();
+    return this.loadMePromise;
   }
 
   async register(payload: {

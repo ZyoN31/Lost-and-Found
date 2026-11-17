@@ -120,10 +120,26 @@ body {
   animation: overlay-in 0.18s ease-out;
 }
 
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-dropdown-in {
+  animation: dropdown-in 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-toast-in,
   .animate-modal-in,
-  .animate-overlay-in {
+  .animate-overlay-in,
+  .animate-dropdown-in {
     animation: none;
   }
 }

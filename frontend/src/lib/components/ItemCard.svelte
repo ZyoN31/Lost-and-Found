@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Item, ItemStatus } from "$lib/types";
+  import type { Item } from "$lib/types";
   import { statusLabels } from "$lib/api";
   import { toasts } from "$lib/toast.svelte";
 
@@ -13,7 +13,7 @@
 
   let { item, onEdit, onDelete, onView, onMarkReturned }: Props = $props();
 
-  const status = statusLabels(item.estado as ItemStatus);
+  const status = $derived(statusLabels(item.estado));
 </script>
 
 <article class="group overflow-hidden rounded-3xl border border-[#ECECEC] bg-white shadow-sm transition-shadow duration-200 hover:shadow-md hover:border-[#4F1F91]/40 focus-within:border-[#4F1F91]">
@@ -64,14 +64,16 @@
       >
         Ver detalle
       </button>
-      <button
-        type="button"
-        class="rounded-full px-3 py-1.5 font-display text-[11px] font-semibold text-white bg-[#000000] hover:bg-[#330085] focus-porple transition-colors"
-        onclick={() => onEdit?.()}
-      >
-        Editar
-      </button>
-      {#if item.estado !== "entregado"}
+      {#if onEdit}
+        <button
+          type="button"
+          class="rounded-full px-3 py-1.5 font-display text-[11px] font-semibold text-white bg-[#000000] hover:bg-[#330085] focus-porple transition-colors"
+          onclick={() => onEdit?.()}
+        >
+          Editar
+        </button>
+      {/if}
+      {#if item.estado !== "entregado" && onMarkReturned}
         <button
           type="button"
           class="rounded-full px-3 py-1.5 font-display text-[11px] font-semibold text-[#059669] bg-[#ECFDF5] hover:bg-[#D1FAE5] focus-porple transition-colors"
@@ -80,13 +82,15 @@
           Devuelto
         </button>
       {/if}
-      <button
-        type="button"
-        class="ml-auto rounded-full px-3 py-1.5 font-display text-[11px] font-semibold text-[#DC2626] bg-[#FEF2F2] hover:bg-[#FEE2E2] focus-porple transition-colors"
-        onclick={() => onDelete?.()}
-      >
-        Eliminar
-      </button>
+      {#if onDelete}
+        <button
+          type="button"
+          class="ml-auto rounded-full px-3 py-1.5 font-display text-[11px] font-semibold text-[#DC2626] bg-[#FEF2F2] hover:bg-[#FEE2E2] focus-porple transition-colors"
+          onclick={() => onDelete?.()}
+        >
+          Eliminar
+        </button>
+      {/if}
     </div>
   </div>
 </article>

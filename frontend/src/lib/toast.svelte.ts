@@ -17,6 +17,8 @@ class ToastStore {
     detail?: string,
     autoDismissMs = 5000
   ): void {
+    // Never stack duplicate toasts with the same message and kind
+    if (this.toasts.some((t) => t.title === title && t.kind === kind)) return;
     const id = crypto.randomUUID();
     this.toasts.push({ id, kind, title, detail, autoDismissMs });
     if (autoDismissMs > 0) {

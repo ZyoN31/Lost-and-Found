@@ -34,10 +34,13 @@ npm start              # sirve dist/ compilado
 | `PORT` | Puerto del servidor (por defecto `4000`) |
 | `MONGODB_URI` | Cadena de conexión de Atlas: `mongodb+srv://<usuario>:<password>@<cluster>.mongodb.net/?retryWrites=true&w=majority` |
 | `JWT_SECRET` | Secreto largo y aleatorio para firmar los JWT (p. ej. `openssl rand -base64 48`) |
-| `CLOUDINARY_CLOUD_NAME` | Nombre del cloud en el dashboard de Cloudinary |
-| `CLOUDINARY_API_KEY` | API Key del dashboard |
-| `CLOUDINARY_API_SECRET` | API Secret del dashboard |
+| `CLOUDINARY_URL` | **Opción A (la más simple):** URL completa copiada tal cual del dashboard (`cloudinary://<key>:<secret>@<cloud_name>`); se usa si las tres de abajo no están definidas |
+| `CLOUDINARY_CLOUD_NAME` | Nombre del cloud — Opción B (p. ej. `luaysree`) |
+| `CLOUDINARY_API_KEY` | API Key del dashboard — Opción B |
+| `CLOUDINARY_API_SECRET` | API Secret del dashboard — Opción B |
 | `FRONTEND_URL` | Origen permitido por CORS (p. ej. `http://localhost:5173`) |
+
+Usa una u otra, nunca ambas: si pegas `CLOUDINARY_URL`, comenta o borra las tres variables separadas. Tras guardar `backend/.env`, reinicia el backend (`Ctrl+C` → `npm run dev`).
 
 La base `upemor_lost_found` se crea sola al conectar. Se crean automáticamente:
 
@@ -55,8 +58,12 @@ La base `upemor_lost_found` se crea sola al conectar. Se crean automáticamente:
 ### Cómo obtener las credenciales de Cloudinary
 
 1. Entra a tu dashboard en [Cloudinary](https://cloudinary.com/console).
-2. Copia **Cloud name**, **API Key** y **API Secret**.
-3. Las fotos de los reportes se suben a la carpeta `lost-and-found` en Cloudinary.
+2. Abre **Product environment settings** → **API Keys** (categoría en el panel lateral) y fíjate en el **Cloud name** (p. ej. `luaysree`) y en el entorno activo arriba (Development/Production): copia siempre del mismo entorno.
+3. **Opción A (recomendada):** pulsa el botón de copiar de la línea **`CLOUDINARY_URL=cloudinary://…`** y pégala tal cual en `backend/.env` (incluye el prefijo `CLOUDINARY_URL=`).
+   **Opción B:** copia **Cloud name**, **API Key** y **API Secret** (ojo 👁 para revelar el secreto) y pégalos en `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` y `CLOUDINARY_API_SECRET`.
+4. Regla de oro: la **key y el secret son inseparables** — deben venir de la MISMA fila; nunca mezcles el secret de una fila con la key de otra (Cloudinary responde 401 `Invalid Signature` o `Invalid cloud_name`).
+5. Ojo: el **Key Name** (la etiqueta de la llave, p. ej. "Cloudz" o "Root") **NO** es el cloud name. Si lo usas como `CLOUDINARY_CLOUD_NAME`, Cloudinary rechaza los uploads.
+6. Las fotos de los reportes se suben a la carpeta `upemor-lost-found/items` en Cloudinary.
 
 ## Frontend
 

@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import { env } from "./env.js";
+import { AppError } from "../utils/errors.js";
 
 let isConfigured = false;
 
@@ -7,8 +8,9 @@ function ensureCloudinaryConfigured(): void {
   if (isConfigured) return;
 
   if (!env.cloudinaryCloudName || !env.cloudinaryApiKey || !env.cloudinaryApiSecret) {
-    throw new Error(
-      "Cloudinary credentials (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET) are missing."
+    throw new AppError(
+      502,
+      "La subida de fotografías no está configurada. Avisa al administrador."
     );
   }
 
@@ -37,7 +39,12 @@ export async function uploadImageBuffer(
       },
       (error, result) => {
         if (error || !result?.secure_url) {
-          reject(error ?? new Error("Failed to upload image to Cloudinary."));
+          console.error("[cloudinary] Upload failed:", error ?? "missing secure_url in response");
+          reject(
+            error instanceof Error
+              ? new AppError(502, "No se pudo subir la fotografía. Intenta de nuevo más tarde.")
+              : new AppError(502, "No se pudo subir la fotografía. Intenta de nuevo más tarde.")
+          );
           return;
         }
         resolve(result.secure_url);

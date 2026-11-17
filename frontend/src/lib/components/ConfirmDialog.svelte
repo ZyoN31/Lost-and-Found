@@ -23,6 +23,20 @@
     dispatch("dismiss");
   }
 
+  function handleWindowKeydown(event: KeyboardEvent): void {
+    if (open && event.key === "Escape") handleDismiss();
+  }
+
+  // Lock body scroll while the dialog is open
+  $effect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  });
+
   const toneClass = {
     primary: "bg-[#330085] hover:bg-[#4F1F91] text-white",
     danger: "bg-[#DC2626] hover:bg-[#B91C1C] text-white",
@@ -30,20 +44,25 @@
   };
 </script>
 
+<svelte:window onkeydown={handleWindowKeydown} />
+
 {#if open}
   <div
-    class="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/30 backdrop-blur-sm animate-overlay-in"
+    class="fixed inset-0 z-[80] flex items-center justify-center p-4"
     role="dialog"
     aria-modal="true"
     aria-labelledby="confirm-title"
-    onclick={handleDismiss}
   >
+    <button
+      type="button"
+      aria-label="Cerrar"
+      class="absolute inset-0 cursor-default bg-black/30 backdrop-blur-sm animate-overlay-in outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#4F1F91]"
+      onclick={(event) => {
+        if (event.target === event.currentTarget) handleDismiss();
+      }}
+    ></button>
     <div
       class="relative w-full max-w-sm overflow-hidden rounded-3xl border border-[#ECECEC] bg-white shadow-2xl animate-modal-in"
-      role="document"
-      tabIndex={0}
-      onclick={(e) => e.stopPropagation()}
-      onkeydown={(e) => e.stopPropagation()}
     >
       <div class="px-6 py-5">
         <h2 id="confirm-title" class="font-display text-xl font-bold text-black">{title}</h2>

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { goto } from "$app/navigation";
+  import { page } from "$app/stores";
   import { auth } from "$lib/auth.svelte";
   import { UPEMOR_EMAIL_REGEX } from "$lib/api";
 
@@ -29,6 +30,12 @@
   ];
 
   onMount(() => {
+    const m = $page.url.searchParams.get("mode");
+    if (m === "register" || m === "login") mode = m;
+  });
+
+  // Signed-in users are always bounced to the feed — never see login/register.
+  $effect(() => {
     if (auth.isAuthenticated) goto("/feed", { replaceState: true });
   });
 
@@ -97,18 +104,18 @@
 </script>
 
 <svelte:head>
-  <title>Lost &amp; Found · Acceso UPEMOR</title>
+  <title>Lost &amp; Found</title>
 </svelte:head>
 
 <div class="flex min-h-screen flex-col bg-white lg:flex-row">
   <!-- Form panel -->
   <div class="relative z-10 flex w-full items-center justify-center px-6 py-12 sm:px-10 lg:w-[46%] lg:px-16">
     <div class="w-full max-w-sm">
-      <div class="flex items-baseline gap-1 font-brand text-[3.2rem] font-medium leading-[0.95] tracking-tight text-black">
-        <span>Lost</span><span class="font-semibold text-[#330085]">&amp;</span><span>Found</span>
+      <div class="flex items-center justify-center mb-6 h-55">
+        <img src="/images/logo-01.svg" alt="" class="h-100 w-100" />
       </div>
-      <p class="mt-4 max-w-[26ch] text-sm leading-relaxed text-[#666666]">
-        Reencuentra tus pertenencias en el campus UPEMOR con tu correo institucional.
+      <p class="flex items-center justify-center text-sm leading-relaxed text-[#666666]">
+        Pagina Oficial de Objetos Perdidos Upemor.
       </p>
 
       <div class="mt-8 inline-flex w-full items-center gap-1 rounded-full bg-[#F5F5F7] p-1" role="tablist">
