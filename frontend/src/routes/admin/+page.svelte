@@ -147,7 +147,7 @@
               <th class="px-4 py-3 sm:px-6 font-semibold">Estudiante</th>
               <th class="px-4 py-3 sm:px-6 font-semibold">Correo institucional</th>
               <th class="px-4 py-3 sm:px-6 font-semibold">Estado</th>
-              <th class="px-4 py-3 sm:px-6 font-semibold">Acceso al campus</th>
+              <th class="px-4 py-3 sm:px-6 font-semibold">Acceso a Lost & Found</th>
             </tr>
           </thead>
           <tbody>

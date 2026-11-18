@@ -140,8 +140,9 @@
   <!-- Form panel -->
   <div class="relative z-10 flex w-full items-center justify-center px-6 py-10 sm:px-10 lg:w-[46%] lg:px-16 lg:py-12">
     <div class="w-full max-w-sm">
-      <div class="mb-5 flex items-center justify-center">
-        <img src="/images/logo-01.svg" alt="Lost & Found UPEMOR" class="h-28 w-28 sm:h-32 sm:w-32" />
+      <!-- Brand Logo Size -->
+      <div class="flex items-center justify-center">
+        <img src="/images/logo-01.svg" alt="Lost & Found UPEMOR" class="h-80 w-80 sm:h-80 sm:w-80 " />
       </div>
       <p class="flex items-center justify-center text-sm leading-relaxed text-[#666666]">
         Página oficial de objetos perdidos Upemor.
@@ -270,7 +271,7 @@
   <!-- Visual panel (desktop): white canvas + organic black liquid contour -->
   <div class="relative hidden flex-1 overflow-hidden bg-[#FFFFFF] isolate lg:block">
     <LiquidInk />
-    <div class="relative flex h-full flex-col items-center justify-between gap-6 px-6 py-8">
+    <div class="relative flex h-full flex-col items-center justify-center gap-6 px-6 py-8">
       <header class="relative z-10 text-center">
         <p class="font-display text-[10px] font-semibold uppercase tracking-[0.34em] text-[#330085]/80">UPEMOR · COMUNIDAD</p>
         <p class="mt-3 font-brand text-3xl leading-[1.15] text-black xl:text-[2.6rem]">Todo vuelve<br /><span class="italic text-[#330085]">a quien lo perdió.</span></p>

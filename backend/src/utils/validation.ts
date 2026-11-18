@@ -58,7 +58,7 @@ export const createItemSchema = z.object({
     errorMap: () => ({ message: "Selecciona una categoría válida" }),
   }),
   ubicacion: z.enum(CAMPUS_ZONES, {
-    errorMap: () => ({ message: "Selecciona una ubicación válida del campus" }),
+    errorMap: () => ({ message: "Selecciona una ubicación válida de Upemor" }),
   }),
   descripcion_publica: z
     .string()
@@ -77,7 +77,7 @@ export const updateItemSchema = z.object({
     errorMap: () => ({ message: "Selecciona una categoría válida" }),
   }),
   ubicacion: z.enum(CAMPUS_ZONES, {
-    errorMap: () => ({ message: "Selecciona una ubicación válida del campus" }),
+    errorMap: () => ({ message: "Selecciona una ubicación válida de Upemor" }),
   }),
   descripcion_publica: z
     .string()

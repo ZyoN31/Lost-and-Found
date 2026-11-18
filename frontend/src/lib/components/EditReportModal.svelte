@@ -176,8 +176,8 @@
               <CustomSelect id="edit-categoria" ariaLabel="Categoría" options={[...CATEGORIES]} bind:value={categoria} />
             </div>
             <div>
-              <label for="edit-ubicacion" class="block font-display text-xs font-semibold text-[#333333] mb-1">Ubicación en Campus</label>
-              <CustomSelect id="edit-ubicacion" ariaLabel="Ubicación en Campus" options={ZONE_OPTIONS} bind:value={ubicacion} />
+              <label for="edit-ubicacion" class="block font-display text-xs font-semibold text-[#333333] mb-1">Ubicación en Upemor</label>
+              <CustomSelect id="edit-ubicacion" ariaLabel="Ubicación en Upemor" options={ZONE_OPTIONS} bind:value={ubicacion} />
             </div>
           </div>
 

@@ -156,7 +156,7 @@
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 class="font-display text-xl font-bold text-black">Mis Reportes</h2>
-            <p class="mt-1 text-xs text-[#666666]">Consulta y administra tus publicaciones en campus.</p>
+            <p class="mt-1 text-xs text-[#666666]">Consulta y administra tus publicaciones en Lost & Found.</p>
           </div>
           <div class="inline-flex items-center gap-1 rounded-full bg-[#F5F5F7] p-1">
             {#each [{ v: "all", l: "Todos" }, { v: "active", l: "Activos" }, { v: "delivered", l: "Devueltos" }] as opt (opt.v)}

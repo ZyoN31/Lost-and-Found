@@ -163,9 +163,9 @@
 
 
   const heroCopy = {
-    perdido: { title: "Lo que perdiste, puede estar aquí.", sub: "Un pequeño hallazgo. Un gran alivio. Reconecta con tus pertenencias en Upemor.", label: "EN EL CAMPUS" },
-    encontrado: { title: "Objetos hallados en el campus.", sub: "Objetos hallados en el campus esperando regresar con su dueño.", label: "ENCONTRADOS EN CAMPUS" },
-    entregado: { title: "Reencuentros en campus.", sub: "Historial de pertenencias recuperadas exitosamente por la comunidad.", label: "REENCUENTROS EN CAMPUS" },
+    perdido: { title: "Lo que perdiste, puede estar aquí.", sub: "Un pequeño hallazgo. Un gran alivio. Reconecta con tus pertenencias en Upemor.", label: "EN UPEMOR" },
+    encontrado: { title: "Objetos hallados en Upemor.", sub: "Objetos hallados en Upemor esperando regresar con su dueño.", label: "ENCONTRADOS EN UPEMOR" },
+    entregado: { title: "Reencuentros de los objetos en Upemor.", sub: "Historial de pertenencias recuperadas exitosamente por la comunidad.", label: "REENCUENTROS EN UPEMOR" },
   };
 
   const copy = $derived(heroCopy[activeTab]);
@@ -208,7 +208,7 @@
       <!-- Sidebar -->
       <aside class="space-y-6">
         <div>
-          <h2 class="font-display text-base font-bold text-black">Ubicación en Campus</h2>
+          <h2 class="font-display text-base font-bold text-black">Ubicación dentro de Upemor</h2>
           <p class="mt-1 text-xs text-[#666666]">Encuentra más cerca de ti</p>
           <ul class="mt-4 space-y-1">
             {#each CAMPUS_ZONES as zone (zone)}

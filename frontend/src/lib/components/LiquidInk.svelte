@@ -135,24 +135,14 @@
     return () => cancelAnimationFrame(raf);
   });
 
-  // Rising black / purple ink droplets
+  // Rising ink droplets along the right/black liquid contour (6 droplets).
   const droplets: Array<[number, number, number, number, number]> = [
-    [82, 20, 30, -2, 12],
-    [90, 60, 22, -5, 10],
-    [68, 40, 12, -1, 8],
-    [56, 30, 18, -7, 11],
-    [74, 90, 16, -3, 13],
-    [94, 110, 24, -6, 9],
-    [64, 70, 9, 0, 7],
-    [84, 130, 14, -4, 12],
-    [71, 150, 20, -9, 14],
-    [88, 40, 10, -2, 8],
-    [60, 110, 16, -5, 10],
-    [79, 180, 12, -8, 15],
-    [52, 60, 9, -1, 9],
-    [66, 20, 22, -6, 11],
-    [98, 160, 16, -3, 13],
-    [62, 130, 11, -7, 9],
+    [84, 35, 28, -2, 13],
+    [92, 75, 22, -5, 15],
+    [78, 115, 16, -1, 11],
+    [88, 145, 14, -7, 14],
+    [66, 55, 12, -3, 10],
+    [96, 95, 20, -4, 16],
   ];
 </script>
 
@@ -163,10 +153,6 @@
   onpointermove={handlePointerMove}
   onpointerleave={handlePointerLeave}
 >
-  <!-- Ambient purple haze behind the ink mass -->
-  <div class="absolute -right-24 top-[8%] h-[28rem] w-[28rem] rounded-full bg-[#330085]/25 blur-3xl"></div>
-  <div class="absolute bottom-[-6rem] left-[24%] h-96 w-96 rounded-full bg-[#4F1F91]/30 blur-3xl"></div>
-  <div class="absolute bottom-[18%] left-[-4rem] h-56 w-56 rounded-full bg-[#330085]/20 blur-3xl"></div>
 
   <svg class="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none">
     <defs>

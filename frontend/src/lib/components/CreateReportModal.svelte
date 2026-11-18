@@ -214,9 +214,9 @@
             </div>
             <div>
               <label for="ubicacion" class="block font-display text-xs font-semibold text-[#333333] mb-1">
-                Ubicación en Campus
+                Ubicación en Upemor
               </label>
-              <CustomSelect id="ubicacion" ariaLabel="Ubicación en Campus" options={ZONE_OPTIONS} bind:value={ubicacion} />
+              <CustomSelect id="ubicacion" ariaLabel="Ubicación en Upemor" options={ZONE_OPTIONS} bind:value={ubicacion} />
             </div>
           </div>
 
