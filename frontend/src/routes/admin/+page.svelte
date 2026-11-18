@@ -5,6 +5,8 @@
   import { auth } from "$lib/auth.svelte";
   import { toasts } from "$lib/toast.svelte";
   import Navbar from "$lib/components/Navbar.svelte";
+  import LiquidSideWaves from "$lib/components/LiquidSideWaves.svelte";
+  import { spotlight, reveal } from "$lib/actions/motion";
 
   interface DashboardUser {
     id: string;
@@ -89,6 +91,7 @@
 
 <div class="min-h-screen bg-white">
   <Navbar active="admin" />
+  <LiquidSideWaves />
 
   <main class="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
     <header class="mb-8">
@@ -99,7 +102,7 @@
 
     <!-- KPI cards -->
     <section class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <div class="rounded-3xl border border-[#ECECEC] bg-white p-6 shadow-sm">
+      <div use:reveal={{ delay: 0, y: 22 }} use:spotlight class="spotlight-card rounded-3xl border border-[#ECECEC] bg-white p-6 shadow-sm">
         <div class="flex items-start justify-between">
           <h2 class="font-display text-sm font-bold text-black">Reportes Activos</h2>
           <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F5F5F7] text-[#330085]">
@@ -109,7 +112,7 @@
         <p class="mt-3 font-display text-4xl font-black text-black">{kpis.activeReports}</p>
         <p class="mt-1 text-[11px] text-[#666666]">Publicaciones que esperan su reencuentro</p>
       </div>
-      <div class="rounded-3xl border border-[#ECECEC] bg-white p-6 shadow-sm">
+      <div use:reveal={{ delay: 110, y: 22 }} use:spotlight class="spotlight-card rounded-3xl border border-[#ECECEC] bg-white p-6 shadow-sm">
         <div class="flex items-start justify-between">
           <h2 class="font-display text-sm font-bold text-black">Objetos Devueltos</h2>
           <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F5F5F7] text-[#330085]">
@@ -119,7 +122,7 @@
         <p class="mt-3 font-display text-4xl font-black text-black">{kpis.returnedItems}</p>
         <p class="mt-1 text-[11px] text-[#666666]">Historias con un final feliz</p>
       </div>
-      <div class="rounded-3xl border border-[#ECECEC] bg-white p-6 shadow-sm">
+      <div use:reveal={{ delay: 220, y: 22 }} use:spotlight class="spotlight-card rounded-3xl border border-[#ECECEC] bg-white p-6 shadow-sm">
         <div class="flex items-start justify-between">
           <h2 class="font-display text-sm font-bold text-black">Acciones en Bitácora</h2>
           <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F5F5F7] text-[#330085]">
@@ -141,10 +144,10 @@
         <table class="w-full min-w-[560px] text-left">
           <thead>
             <tr class="bg-[#F5F5F7] font-display text-[11px] uppercase tracking-wider text-[#666666]">
-              <th class="px-6 py-3 font-semibold">Estudiante</th>
-              <th class="px-6 py-3 font-semibold">Correo institucional</th>
-              <th class="px-6 py-3 font-semibold">Estado</th>
-              <th class="px-6 py-3 font-semibold">Acceso al campus</th>
+              <th class="px-4 py-3 sm:px-6 font-semibold">Estudiante</th>
+              <th class="px-4 py-3 sm:px-6 font-semibold">Correo institucional</th>
+              <th class="px-4 py-3 sm:px-6 font-semibold">Estado</th>
+              <th class="px-4 py-3 sm:px-6 font-semibold">Acceso al campus</th>
             </tr>
           </thead>
           <tbody>
@@ -154,8 +157,8 @@
               <tr><td colspan="4" class="px-6 py-8 text-center text-sm text-[#999999]">Sin usuarios registrados.</td></tr>
             {:else}
               {#each users as user (user.id)}
-                <tr class="border-t border-[#ECECEC] text-sm">
-                  <td class="px-6 py-3">
+                <tr class="border-t border-[#ECECEC] text-xs sm:text-sm">
+                  <td class="px-4 py-3 sm:px-6">
                     <div class="flex items-center gap-3">
                       <span class="flex h-8 w-8 items-center justify-center rounded-full bg-[#F5F5F7] font-display text-[11px] font-bold text-[#330085]">
                         {user.nombre_completo.charAt(0).toUpperCase()}
@@ -163,13 +166,14 @@
                       <span class="font-display font-medium text-[#333333]">{user.nombre_completo}</span>
                     </div>
                   </td>
-                  <td class="px-6 py-3 text-[#555555]">{user.correo}</td>
-                  <td class="px-6 py-3">
-                    <span class={`inline-flex rounded-full px-3 py-0.5 font-display text-[11px] font-semibold ${user.activo ? "bg-[#ECFDF5] text-[#059669]" : "bg-[#FEF2F2] text-[#DC2626]"}`}>
+                  <td class="px-4 py-3 sm:px-6 text-[#555555]">{user.correo}</td>
+                  <td class="px-4 py-3 sm:px-6">
+                    <span class={`inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 font-display text-[11px] font-semibold ${user.activo ? "bg-[#ECFDF5] text-[#059669]" : "bg-[#FEF2F2] text-[#DC2626]"}`}>
+                      <span class={`h-1.5 w-1.5 rounded-full bg-current ${user.activo ? "status-pulse" : ""}`}></span>
                       {user.activo ? "Activo" : "Suspendido"}
                     </span>
                   </td>
-                  <td class="px-6 py-3">
+                  <td class="px-4 py-3 sm:px-6">
                     <button
                       type="button"
                       role="switch"
@@ -200,10 +204,10 @@
         <table class="w-full min-w-[640px] text-left">
           <thead>
             <tr class="bg-[#F5F5F7] font-display text-[11px] uppercase tracking-wider text-[#666666]">
-              <th class="px-6 py-3 font-semibold">Admin</th>
-              <th class="px-6 py-3 font-semibold">Acción</th>
-              <th class="px-6 py-3 font-semibold">Motivo</th>
-              <th class="px-6 py-3 font-semibold">Fecha</th>
+              <th class="px-4 py-3 sm:px-6 font-semibold">Admin</th>
+              <th class="px-4 py-3 sm:px-6 font-semibold">Acción</th>
+              <th class="px-4 py-3 sm:px-6 font-semibold">Motivo</th>
+              <th class="px-4 py-3 sm:px-6 font-semibold">Fecha</th>
             </tr>
           </thead>
           <tbody>
@@ -213,13 +217,13 @@
               <tr><td colspan="4" class="px-6 py-8 text-center text-sm text-[#999999]">Todavía no hay acciones registradas.</td></tr>
             {:else}
               {#each auditLogs as entry (entry.id)}
-                <tr class="border-t border-[#ECECEC] text-sm">
-                  <td class="px-6 py-3 font-display text-[#333333]">{entry.admin_nombre}</td>
-                  <td class="px-6 py-3">
+                <tr class="border-t border-[#ECECEC] text-xs sm:text-sm">
+                  <td class="px-4 py-3 sm:px-6 font-display text-[#333333]">{entry.admin_nombre}</td>
+                  <td class="px-4 py-3 sm:px-6">
                     <span class="rounded-full bg-[#F5F5F7] px-2.5 py-0.5 font-display text-[11px] font-semibold text-[#330085]">{entry.accion}</span>
                   </td>
-                  <td class="px-6 py-3 text-[#555555]">{entry.motivo}</td>
-                  <td class="px-6 py-3 font-display text-[11px] text-[#666666]">{formatDateTime(entry.fecha)}</td>
+                  <td class="px-4 py-3 sm:px-6 text-[#555555]">{entry.motivo}</td>
+                  <td class="px-4 py-3 sm:px-6 font-display text-[11px] text-[#666666]">{formatDateTime(entry.fecha)}</td>
                 </tr>
               {/each}
             {/if}

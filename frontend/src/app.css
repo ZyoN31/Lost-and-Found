@@ -54,6 +54,13 @@ body {
   background-position: -8px -8px;
 }
 
+/* Fades the dotted grid into the white base so it reads as architecture,
+   not wallpaper. Apply together with .dotted-grid. */
+.dotted-fade {
+  -webkit-mask-image: radial-gradient(120% 105% at 62% 0%, black 30%, transparent 78%);
+  mask-image: radial-gradient(120% 105% at 62% 0%, black 30%, transparent 78%);
+}
+
 /* Focus ring shared by interactive controls. */
 .focus-porple:focus-visible {
   outline: none;
@@ -75,6 +82,260 @@ body {
 .thin-scroll::-webkit-scrollbar-thumb {
   background-color: #d4d4d8;
   border-radius: 9999px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Spotlight cards: pointer-tracked #4F1F91 sheen via --mx / --my.     */
+/* Pairs with the `spotlight` action; enhances existing light cards.   */
+/* ------------------------------------------------------------------ */
+.spotlight-card {
+  position: relative;
+  isolation: isolate;
+}
+
+.spotlight-card::before,
+.spotlight-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+  z-index: 0;
+}
+
+/* Border ring sheen: a 1px gradient ring masked to the card edge. */
+.spotlight-card::before {
+  padding: 1px;
+  background: radial-gradient(
+    300px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(79, 31, 145, 0.55),
+    transparent 62%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+/* Surface glow that washes the card body. */
+.spotlight-card::after {
+  background: radial-gradient(
+    340px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(79, 31, 145, 0.14),
+    transparent 65%
+  );
+}
+
+.spotlight-card:hover::before,
+.spotlight-card:hover::after,
+.spotlight-card:focus-within::before,
+.spotlight-card:focus-within::after {
+  opacity: 1;
+}
+
+/* Keep interactive children above the glow layer, but exclude anchors so the
+   stretched link (z-10 via Tailwind) stays on top and receives clicks.
+   No z-index here — content stays at z-auto so buttons' z-20 can beat the
+   anchor's z-10 within the same article stacking context. */
+.spotlight-card > *:not(a[href]) {
+  position: relative;
+}
+
+/* ------------------------------------------------------------------ */
+/* Organic liquid & floating keyframes                                */
+/* ------------------------------------------------------------------ */
+@keyframes liquid-morph {
+  0%,
+  100% {
+    border-radius: 52% 48% 62% 38% / 45% 55% 45% 55%;
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  33% {
+    border-radius: 60% 40% 45% 55% / 55% 45% 60% 40%;
+    transform: translate3d(5%, -7%, 0) rotate(7deg) scale(1.07);
+  }
+  66% {
+    border-radius: 45% 55% 55% 45% / 50% 62% 40% 50%;
+    transform: translate3d(-6%, 5%, 0) rotate(-6deg) scale(0.94);
+  }
+}
+
+.animate-liquid-morph {
+  animation: liquid-morph 14s ease-in-out infinite;
+}
+
+@keyframes float-levitate {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+.animate-float-levitate {
+  animation: float-levitate 5.6s ease-in-out infinite;
+}
+
+/* Animated dashed-border shimmer for the dropzone while dragging. */
+@keyframes shimmer-border {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.shimmer-border {
+  border-color: transparent !important;
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(
+      110deg,
+      #4f1f91 0%,
+      #330085 22%,
+      #ffffff 40%,
+      #4f1f91 58%,
+      #330085 76%,
+      #4f1f91 100%
+    )
+      border-box !important;
+  background-size:
+    100% 100%,
+    240% 100% !important;
+  animation: shimmer-border 1.5s linear infinite;
+}
+
+/* Live pulse ring for active status dots (perdido / encontrado). */
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 42%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.status-pulse {
+  animation: pulse-ring 2.1s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+/* Hero copy transition when switching tabs on /feed. */
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.animate-hero-in {
+  animation: hero-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Drifting wave line used on the compact liquid banner (mobile /login). */
+@keyframes wave-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-wave-drift {
+  animation: wave-drift 8s linear infinite;
+}
+
+/* Rising ink droplets for the side waves. */
+@keyframes droplet-drift {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.6);
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-8%, -120px, 0) scale(1.1);
+  }
+}
+
+.animate-droplet-drift {
+  animation: droplet-drift 12s ease-in-out infinite;
+}
+
+.ink-droplet {
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #4F1F91 0%, #330085 30%, #000000 80%);
+  box-shadow: 0 0 18px rgba(79, 31, 145, 0.6);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.ink-droplet::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(circle, rgba(79, 31, 145, 0.4) 0%, rgba(79, 31, 145, 0.0) 70%);
+  animation: ripple 1.5s ease-out forwards;
+}
+
+@keyframes ripple {
+  0% { opacity: 0.4; transform: translate(-50%, -50%) scale(0.5); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(2); }
+}
+
+/* Preview scale-in for freshly dropped images. */
+@keyframes preview-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-preview-in {
+  animation: preview-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Soft aura behind hovered icon tiles on the login showcase.
+   Note: transform is intentionally NOT transitioned — tilt3d owns it per-frame. */
+.aura-tile {
+  transition: box-shadow 0.45s ease, background-color 0.45s ease, border-color 0.45s ease;
+}
+
+.aura-tile:hover {
+  box-shadow:
+    0 0 0 1px rgba(79, 31, 145, 0.4),
+    0 18px 44px -12px rgba(79, 31, 145, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  border-color: rgba(79, 31, 145, 0.65);
 }
 
 @keyframes toast-in {
@@ -139,7 +400,14 @@ body {
   .animate-toast-in,
   .animate-modal-in,
   .animate-overlay-in,
-  .animate-dropdown-in {
+  .animate-dropdown-in,
+  .animate-liquid-morph,
+  .animate-float-levitate,
+  .animate-hero-in,
+  .shimmer-border,
+  .animate-wave-drift,
+  .animate-preview-in,
+  .status-pulse {
     animation: none;
   }
 }

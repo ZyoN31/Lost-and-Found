@@ -9,12 +9,18 @@
   let booting = $state(true);
 
   onMount(async () => {
+    // Hard failsafe: even if loadMe hangs (offline backend), the splash
+    // screen can never block rendering forever.
+    const failsafe = setTimeout(() => {
+      booting = false;
+    }, 3500);
+
     try {
       await auth.loadMe();
     } catch {
-      // loadMe clears the session itself only on a real 401;
-      // transient failures keep the token for the next reload.
+      auth.clear();
     } finally {
+      clearTimeout(failsafe);
       booting = false;
     }
   });

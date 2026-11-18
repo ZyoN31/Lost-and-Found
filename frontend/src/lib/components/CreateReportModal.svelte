@@ -18,6 +18,7 @@
   let descripcion = $state("");
   let file = $state<File | null>(null);
   let previewUrl = $state("");
+  let isDragging = $state(false);
   let isSubmitting = $state(false);
   let errors = $state<Record<string, string>>({});
 
@@ -31,6 +32,7 @@
     previewUrl = "";
     errors = {};
     isSubmitting = false;
+    isDragging = false;
   }
 
   $effect(() => {
@@ -62,8 +64,24 @@
 
   function handleDrop(e: DragEvent): void {
     e.preventDefault();
+    isDragging = false;
     const dropped = e.dataTransfer?.files?.[0];
     if (dropped) handleFile(dropped);
+  }
+
+  function handleDragEnter(e: DragEvent): void {
+    e.preventDefault();
+    isDragging = true;
+  }
+
+  function handleDragOver(e: DragEvent): void {
+    e.preventDefault();
+    isDragging = true;
+  }
+
+  function handleDragLeave(e: DragEvent): void {
+    // Only reset when the pointer truly exits the dropzone
+    if (e.currentTarget === e.target) isDragging = false;
   }
 
   function handleInputChange(e: Event): void {
@@ -222,25 +240,33 @@
           <div>
             <p class="mb-1 font-display text-xs font-semibold text-[#333333]">Fotografía del objeto</p>
             <div
-              class={`relative flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed transition-colors ${previewUrl ? "border-[#4F1F91] bg-white" : "border-[#ECECEC] bg-[#F5F5F7]"} p-3`}
+              class={`relative flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed p-3 transition-all duration-200 ${
+                isDragging
+                  ? "shimmer-border scale-[1.015] bg-white"
+                  : previewUrl
+                    ? "border-[#4F1F91] bg-white"
+                    : "border-[#ECECEC] bg-[#F5F5F7]"
+              }`}
               role="region"
               aria-label="Zona para subir la fotografía del objeto"
-              ondragover={(e) => e.preventDefault()}
+              ondragenter={handleDragEnter}
+              ondragover={handleDragOver}
+              ondragleave={handleDragLeave}
               ondrop={handleDrop}
             >
               {#if previewUrl}
-                <img src={previewUrl} alt="Vista previa" class="max-h-44 w-full rounded-xl object-contain shadow-sm" />
+                <img src={previewUrl} alt="Vista previa" class="animate-preview-in max-h-44 w-full rounded-xl object-contain shadow-sm" />
                 <div class="flex items-center gap-2">
                   <span class="truncate max-w-[12rem] font-display text-xs text-[#333333]">{file?.name ?? "Imagen"}</span>
                   <button type="button" class="text-xs text-[#330085] hover:underline" onclick={() => { file = null; previewUrl = ""; }}>Cambiar</button>
                 </div>
               {:else}
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V9" /><path d="M8.5 12.5 12 9l3.5 3.5" /><path d="M20 16.5A4 4 0 0 0 17 9h-1" /><path d="M6 16a4 4 0 0 1 4-4" /></svg>
+                <img src="/icons/icon-upload.png" alt="" class="h-10 w-10 opacity-15"/>
                 <div class="text-center">
                   <p class="font-display text-sm font-medium text-[#333333]">Arrastra una imagen o haz clic para subir</p>
                   <p class="mt-1 text-xs text-[#999999]">JPG, PNG o WEBP · Máx. 5 MB</p>
                 </div>
-                <label class="mt-1 inline-flex cursor-pointer rounded-full bg-[#000000] px-4 py-1.5 font-display text-xs font-semibold text-white hover:bg-[#330085] focus-within:ring-2 focus-within:ring-[#4F1F91] transition-colors">
+                <label class="mt-1 inline-flex cursor-pointer rounded-full bg-[#000000] px-4 py-1.5 font-display text-xs font-semibold text-white transition-all duration-150 hover:bg-[#330085] focus-within:ring-2 focus-within:ring-[#4F1F91] active:scale-95">
                   Subir foto
                   <input type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" onchange={handleInputChange} />
                 </label>
@@ -255,14 +281,14 @@
         <div class="sticky bottom-0 mt-4 flex flex-col-reverse gap-2 border-t border-[#ECECEC] bg-[#FFFFFF]/95 backdrop-blur pt-3 sm:flex-row sm:items-center sm:justify-end">
           <button
             type="button"
-            class="rounded-full border border-transparent bg-[#F5F5F7] px-5 py-2.5 font-display text-sm font-semibold text-[#555555] hover:bg-[#ECECEC] focus-porple transition-colors"
+            class="rounded-full border border-transparent bg-[#F5F5F7] px-5 py-2.5 font-display text-sm font-semibold text-[#555555] hover:bg-[#ECECEC] focus-porple transition-all duration-150 active:scale-[0.98]"
             onclick={close}
           >
             Cancelar
           </button>
           <button
             type="submit"
-            class="inline-flex items-center justify-center gap-2 rounded-full bg-[#000000] px-6 py-2.5 font-display text-sm font-semibold text-white hover:bg-[#330085] focus-porple transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-[#000000] px-6 py-2.5 font-display text-sm font-semibold text-white hover:bg-[#330085] focus-porple transition-all duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSubmitting}
           >
             {#if isSubmitting}<span class="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>{/if}

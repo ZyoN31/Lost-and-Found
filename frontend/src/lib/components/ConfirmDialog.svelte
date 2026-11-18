@@ -73,7 +73,7 @@
       <div class="px-6 py-4 pb-5 flex flex-col-reverse gap-2 border-t border-[#ECECEC] sm:flex-row sm:justify-end">
         <button
           type="button"
-          class="rounded-full bg-[#F5F5F7] px-5 py-2.5 font-display text-sm font-semibold text-[#333333] hover:bg-[#ECECEC] transition-colors"
+          class="rounded-full bg-[#F5F5F7] px-5 py-2.5 font-display text-sm font-semibold text-[#333333] transition-all duration-150 hover:bg-[#ECECEC] focus-porple active:scale-[0.98]"
           onclick={handleDismiss}
           disabled={loading}
         >
@@ -81,7 +81,7 @@
         </button>
         <button
           type="button"
-          class={`rounded-full px-5 py-2.5 font-display text-sm font-semibold transition-colors disabled:opacity-60 ${toneClass[tone]}`}
+          class={`rounded-full px-5 py-2.5 font-display text-sm font-semibold transition-all duration-150 focus-porple active:scale-[0.98] disabled:opacity-60 ${toneClass[tone]}`}
           onclick={handleConfirm}
           disabled={loading}
         >

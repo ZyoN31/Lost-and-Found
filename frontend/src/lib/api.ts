@@ -62,12 +62,30 @@ export class ApiClient {
       }
     }
 
-    const res = await fetch(url, {
-      method,
-      headers: requestHeaders,
-      body: requestBody,
-    });
-    return handleResponse<T>(res);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: requestHeaders,
+        body: requestBody,
+        signal: controller.signal,
+      });
+      return handleResponse<T>(res);
+    } catch (err: any) {
+      if (err?.name === "AbortError") {
+        const timeoutErr: any = new Error(
+          "Tiempo de espera agotado. El servidor no respondió a tiempo."
+        );
+        timeoutErr.status = 408;
+        timeoutErr.timeout = true;
+        throw timeoutErr;
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   /* ---------- Auth ---------- */

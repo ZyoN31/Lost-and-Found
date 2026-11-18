@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { page } from "$app/stores";
+  import { goto } from "$app/navigation";
   import { api, CAMPUS_ZONES, CATEGORIES } from "$lib/api";
   import { auth } from "$lib/auth.svelte";
   import { toasts } from "$lib/toast.svelte";
@@ -11,10 +12,15 @@
   import EditReportModal from "$lib/components/EditReportModal.svelte";
   import ItemDetailModal from "$lib/components/ItemDetailModal.svelte";
   import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
+  import LiquidSideWaves from "$lib/components/LiquidSideWaves.svelte";
+  import { spotlight } from "$lib/actions/motion";
 
   let items = $state<Item[]>([]);
   let loading = $state(true);
   let search = $state("");
+  let debouncedSearch = $state("");
+  let requestSeq = 0;
+  let searchTimer: ReturnType<typeof setTimeout> | undefined;
   let zona = $state("Todas las zonas");
   let categoria = $state("Todos");
   let createOpen = $state(false);
@@ -59,20 +65,70 @@
     }
   });
 
+  // 250ms debounce on the search box: rapid typing coalesces into one fetch.
+  $effect(() => {
+    const value = search;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      debouncedSearch = value;
+    }, 250);
+    return () => clearTimeout(searchTimer);
+  });
+
+  // Strips transient modal params (?create / ?editId / ?detailId) from the URL
+  // when a modal closes. Uses goto with replaceState so the reactive $effect
+  // never re-opens the modal on the lingering query param.
+  function clearModalParams(): void {
+    const url = new URL($page.url);
+    let dirty = false;
+    for (const key of ["create", "editId", "detailId"]) {
+      if (url.searchParams.has(key)) {
+        url.searchParams.delete(key);
+        dirty = true;
+      }
+    }
+    if (!dirty) return;
+    const target =
+      url.pathname + (url.searchParams.size > 0 ? `?${url.searchParams.toString()}` : "");
+    goto(target, { replaceState: true, noScroll: true, keepFocus: true });
+  }
+
+  // Reactive guard: when a modal flips open -> false (e.g. backdrop click,
+  // Escape, or X), strip the URL params so the $effect below cannot re-open it.
+  $effect(() => {
+    if (!createOpen) clearModalParams();
+  });
+  $effect(() => {
+    if (!editOpen) {
+      clearModalParams();
+      lastEditId = "";
+    }
+  });
+  $effect(() => {
+    if (!detailOpen) {
+      clearModalParams();
+      lastDetailId = "";
+    }
+  });
+
   async function load(): Promise<void> {
+    // Request-sequence guard: stale responses never overwrite fresh ones.
+    const seq = ++requestSeq;
     loading = true;
     try {
       const { items: data } = await api.listItems({
         estado: activeTab,
         categoria: categoria !== "Todos" ? categoria : undefined,
         ubicacion: zona !== "Todas las zonas" ? zona : undefined,
-        search: search.trim() || undefined,
+        search: debouncedSearch.trim() || undefined,
       });
+      if (seq !== requestSeq) return;
       items = data;
     } catch (err: any) {
+      if (seq !== requestSeq) return;
       toasts.add(err?.message ?? "No se pudieron cargar los reportes.", "error");
     } finally {
-      loading = false;
+      if (seq === requestSeq) loading = false;
     }
   }
 
@@ -124,19 +180,27 @@
 
 <div class="min-h-screen bg-white">
   <Navbar active="feed" />
+  <LiquidSideWaves />
 
   <main class="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
     <!-- Hero -->
-    <section class="grid grid-cols-1 items-center gap-6 border-b border-[#ECECEC] pb-10 md:grid-cols-[1fr_auto]">
-      <div>
-        <p class="font-display text-[10px] font-semibold uppercase tracking-[0.2em] text-[#330085]">CONECTA · ENCUENTRA · RECUPERA</p>
-        <h1 class="mt-2 font-display text-3xl font-extrabold tracking-tight text-black sm:text-4xl lg:text-5xl">
-          {copy.title}
-        </h1>
-        <p class="mt-3 max-w-[46ch] text-sm leading-relaxed text-[#666666]">{copy.sub}</p>
-      </div>
-      <div class="hidden md:block">
-        <img src="/images/empty-box.svg" alt="" class="h-32 w-32 lg:h-40 lg:w-40" />
+    <section class="relative overflow-hidden border-b border-[#ECECEC] pb-10">
+      <div class="dotted-grid dotted-fade pointer-events-none absolute inset-0"></div>
+      <div class="relative grid grid-cols-1 items-center gap-6 md:grid-cols-[1fr_auto]">
+        {#key activeTab}
+          <div class="animate-hero-in">
+            <div class="flex flex-wrap items-center gap-3">
+              <p class="font-display text-[10px] font-semibold uppercase tracking-[0.2em] text-[#330085]">CONECTA · ENCUENTRA · RECUPERA</p>
+            </div>
+            <h1 class="mt-3 font-display text-3xl font-extrabold tracking-tight text-black sm:text-4xl lg:text-5xl">
+              {copy.title}
+            </h1>
+            <p class="mt-3 max-w-[46ch] text-sm leading-relaxed text-[#666666]">{copy.sub}</p>
+          </div>
+        {/key}
+        <div class="hidden md:block">
+          <img src="/images/empty-box.svg" alt="" class="animate-float-levitate h-32 w-32 drop-shadow-[0_18px_24px_rgba(79,31,145,0.25)] lg:h-40 lg:w-40" />
+        </div>
       </div>
     </section>
 
@@ -151,7 +215,7 @@
               <li>
                 <button
                   type="button"
-                  class={`flex w-full items-center gap-2 rounded-full px-4 py-2 text-left font-display text-xs font-medium transition-colors ${zona === zone ? "bg-[#F5F5F7] text-[#330085]" : "text-[#333333] hover:bg-[#F5F5F7]"}`}
+                  class={`flex w-full items-center gap-2 rounded-full px-4 py-2 text-left font-display text-xs font-medium transition-all duration-300 ${zona === zone ? "bg-[#F5F5F7] text-[#330085]" : "text-[#333333] hover:bg-[#F5F5F7]"}`}
                   onclick={() => (zona = zone)}
                 >
                   <span class="h-1.5 w-1.5 rounded-full {zona === zone ? 'bg-[#330085]' : 'bg-[#D4D4D8]'}"></span>
@@ -169,7 +233,7 @@
           <div class="inline-flex flex-wrap items-center gap-1.5">
             <button
               type="button"
-              class={`rounded-full px-3.5 py-1.5 font-display text-xs font-semibold transition-colors ${categoria === "Todos" ? "bg-[#000000] text-white" : "bg-[#F5F5F7] text-[#333333] hover:bg-[#ECECEC]"}`}
+              class={`rounded-full px-3.5 py-1.5 font-display text-xs font-semibold transition-all duration-300 ${categoria === "Todos" ? "bg-[#000000] text-white" : "bg-[#F5F5F7] text-[#333333] hover:bg-[#ECECEC]"}`}
               onclick={() => (categoria = "Todos")}
             >
               Todos
@@ -184,7 +248,10 @@
               </button>
             {/each}
           </div>
-          <div class="flex items-center gap-2 rounded-full border border-[#ECECEC] bg-white px-4 py-2 lg:w-72">
+          <div
+            use:spotlight
+            class="flex items-center gap-2 rounded-full border border-[#ECECEC] bg-white px-4 py-2 lg:w-72"
+          >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999999" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
             <input
               type="text"
@@ -209,8 +276,11 @@
             {/each}
           </div>
         {:else if items.length === 0}
-          <div class="mt-6 flex flex-col items-center justify-center rounded-3xl border border-dashed border-[#ECECEC] bg-white py-16 text-center">
-            <img src="/images/empty-box.svg" alt="" class="h-24 w-24 opacity-40" />
+          <div
+            use:spotlight
+            class="mt-6 flex flex-col items-center justify-center rounded-3xl border border-dashed border-[#ECECEC] bg-white py-16 text-center"
+          >
+            <img src="/images/empty-box.svg" alt="" class="animate-float-levitate h-24 w-24 opacity-40" />
             <p class="mt-4 font-display text-base font-semibold text-black">No hay reportes en esta vista</p>
             <p class="mt-1 text-sm text-[#666666]">Ajusta los filtros o crea el primero con el botón «+ Crear Reporte».</p>
           </div>
@@ -240,8 +310,16 @@
     </div>
   </footer>
 
-  <CreateReportModal bind:open={createOpen} on:created={() => load()} />
-  <EditReportModal bind:open={editOpen} item={editingItem} on:updated={() => load()} />
+  <CreateReportModal bind:open={createOpen} on:created={() => load()} on:close={() => clearModalParams()} />
+  <EditReportModal
+    bind:open={editOpen}
+    item={editingItem}
+    on:updated={() => load()}
+    on:close={() => {
+      clearModalParams();
+      lastEditId = "";
+    }}
+  />
   <ItemDetailModal
     bind:open={detailOpen}
     item={detailItem}
@@ -249,7 +327,17 @@
     isAdmin={auth.user?.rol === "admin"}
     on:updated={() => load()}
     on:deleted={() => load()}
-    on:edit={(e) => { editingItem = e.detail.item; editOpen = true; detailOpen = false; }}
+    on:edit={(e) => {
+      editingItem = e.detail.item;
+      editOpen = true;
+      detailOpen = false;
+      clearModalParams();
+      lastDetailId = "";
+    }}
+    on:close={() => {
+      clearModalParams();
+      lastDetailId = "";
+    }}
   />
   <ConfirmDialog
     open={confirmDelete.open}

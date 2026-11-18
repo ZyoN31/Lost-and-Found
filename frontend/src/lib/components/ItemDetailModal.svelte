@@ -193,10 +193,10 @@
 
           {#if isOwner || isAdmin}
             <div class="flex flex-wrap gap-2 px-6 pb-4">
-              <button type="button" class="rounded-full bg-[#F5F5F7] px-4 py-2 font-display text-xs font-semibold text-[#333333] hover:bg-[#ECECEC] focus-porple transition-colors" onclick={() => dispatch("edit", { item })}>Editar</button>
-              <button type="button" class="rounded-full bg-[#FEF2F2] px-4 py-2 font-display text-xs font-semibold text-[#DC2626] hover:bg-[#FEE2E2] focus-porple transition-colors" onclick={() => (confirmDeleteOpen = true)}>Eliminar</button>
+              <button type="button" class="rounded-full bg-[#F5F5F7] px-4 py-2 font-display text-xs font-semibold text-[#333333] transition-all duration-150 hover:bg-[#ECECEC] focus-porple active:scale-95" onclick={() => dispatch("edit", { item })}>Editar</button>
+              <button type="button" class="rounded-full bg-[#FEF2F2] px-4 py-2 font-display text-xs font-semibold text-[#DC2626] transition-all duration-150 hover:bg-[#FEE2E2] focus-porple active:scale-95" onclick={() => (confirmDeleteOpen = true)}>Eliminar</button>
               {#if item.estado !== "entregado"}
-                <button type="button" class="rounded-full bg-[#000000] px-4 py-2 font-display text-xs font-semibold text-white hover:bg-[#330085] focus-porple transition-colors" onclick={() => (confirmReturnOpen = true)}>Marcar como Devuelto</button>
+                <button type="button" class="rounded-full bg-[#000000] px-4 py-2 font-display text-xs font-semibold text-white transition-all duration-150 hover:bg-[#330085] focus-porple active:scale-95" onclick={() => (confirmReturnOpen = true)}>Marcar como Devuelto</button>
               {/if}
             </div>
           {/if}
@@ -264,7 +264,7 @@
                 />
                 <button
                   type="submit"
-                  class="shrink-0 rounded-full bg-[#000000] px-5 py-2.5 font-display text-xs font-semibold text-white hover:bg-[#330085] focus-porple transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                  class="shrink-0 rounded-full bg-[#000000] px-5 py-2.5 font-display text-xs font-semibold text-white transition-all duration-150 hover:bg-[#330085] focus-porple active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={submitting || !newComment.trim()}
                 >
                   Enviar

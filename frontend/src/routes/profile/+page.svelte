@@ -7,6 +7,8 @@
   import type { Item } from "$lib/types";
   import Navbar from "$lib/components/Navbar.svelte";
   import StatusBadge from "$lib/components/StatusBadge.svelte";
+  import LiquidSideWaves from "$lib/components/LiquidSideWaves.svelte";
+  import { spotlight, reveal } from "$lib/actions/motion";
 
   let me = $state<{ nombre_completo: string; correo: string; rol: string; activo: boolean; foto_url: string | null } | null>(null);
   let myReports = $state<Item[]>([]);
@@ -81,6 +83,7 @@
 
 <div class="min-h-screen bg-white">
   <Navbar active="profile" />
+  <LiquidSideWaves />
 
   <main class="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
     <header class="mb-8">
@@ -90,13 +93,21 @@
     </header>
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-      <!-- Profile card -->
-      <aside class="rounded-3xl border border-[#ECECEC] bg-white p-6 text-center shadow-sm">
-        <div class="relative mx-auto h-24 w-24">
+      <!-- Profile card with liquid-dark banner -->
+      <aside use:reveal={{ y: 18 }} class="overflow-hidden rounded-3xl border border-[#ECECEC] bg-white text-center shadow-sm">
+        <div class="relative h-28 overflow-hidden bg-black">
+          <div class="animate-liquid-morph absolute -left-5 top-1 h-24 w-24 bg-[#330085]/80 blur-xl"></div>
+          <div class="animate-liquid-morph absolute right-0 top-5 h-20 w-28 bg-[#4F1F91]/70 blur-lg [animation-delay:-6s]"></div>
+          <div class="absolute inset-0 bg-[radial-gradient(120%_130%_at_50%_0%,transparent_25%,rgba(0,0,0,0.6)_100%)]"></div>
+          <p class="absolute left-5 top-4 font-display text-[9px] font-semibold uppercase tracking-[0.3em] text-white/55">Comunidad Upemor</p>
+        </div>
+
+        <div class="px-6 pb-6">
+        <div class="relative mx-auto -mt-12 h-24 w-24">
           {#if me?.foto_url}
-            <img src={me.foto_url} alt={me.nombre_completo} class="h-24 w-24 rounded-full object-cover" />
+            <img src={me.foto_url} alt={me.nombre_completo} class="h-24 w-24 rounded-full object-cover shadow-[0_0_0_4px_#ffffff,0_0_40px_rgba(79,31,145,0.6)]" />
           {:else}
-            <div class="flex h-24 w-24 items-center justify-center rounded-full bg-[#F5F5F7] font-brand text-3xl text-[#330085]">
+            <div class="flex h-24 w-24 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#4F1F91,#330085_62%,#000000)] font-brand text-3xl text-white shadow-[0_0_0_4px_#ffffff,0_0_40px_rgba(79,31,145,0.6)]">
               {(me?.nombre_completo ?? "?").charAt(0).toUpperCase()}
             </div>
           {/if}
@@ -132,11 +143,12 @@
 
         <button
           type="button"
-          class="mt-5 w-full rounded-full bg-[#F5F5F7] px-4 py-2.5 font-display text-sm font-semibold text-[#333333] transition-colors hover:bg-[#ECECEC] focus-porple"
+          class="mt-5 w-full rounded-full bg-[#F5F5F7] px-4 py-2.5 font-display text-sm font-semibold text-[#333333] transition-all hover:bg-[#ECECEC] focus-porple active:scale-[0.98]"
           onclick={handleLogout}
         >
           Cerrar sesión
         </button>
+        </div>
       </aside>
 
       <!-- Reports -->
@@ -171,8 +183,11 @@
               <a href="/feed?create=1" class="mt-4 inline-flex rounded-full bg-[#000000] px-4 py-2 font-display text-xs font-semibold text-white hover:bg-[#330085] transition-colors">+ Crear Reporte</a>
             </div>
           {:else}
-            {#each filteredReports as item (item.id)}
-              <div class="flex items-center gap-4 rounded-2xl border border-[#ECECEC] bg-white p-3 transition-shadow hover:shadow-sm">
+            {#each filteredReports as item, i (item.id)}
+              <div
+                use:reveal={{ delay: Math.min(i * 70, 420), y: 20 }}
+                class="spotlight-card flex items-center gap-4 rounded-2xl border border-[#ECECEC] bg-white p-3 transition-shadow duration-200 hover:shadow-md"
+              >
                 <div class="h-16 w-20 shrink-0 overflow-hidden rounded-xl bg-[#F5F5F7]">
                   {#if item.foto_url}
                     <img src={item.foto_url} alt="" class="h-full w-full object-cover" />

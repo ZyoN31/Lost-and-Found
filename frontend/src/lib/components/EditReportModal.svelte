@@ -19,6 +19,7 @@
   let descripcion = $state("");
   let newFile = $state<File | null>(null);
   let previewUrl = $state("");
+  let isDragging = $state(false);
   let isSubmitting = $state(false);
   let errors = $state<Record<string, string>>({});
   let confirmOpen = $state(false);
@@ -33,6 +34,7 @@
       newFile = null;
       errors = {};
       isSubmitting = false;
+      isDragging = false;
     }
   });
 
@@ -57,6 +59,16 @@
     if (selected) {
       newFile = selected;
       previewUrl = URL.createObjectURL(selected);
+    }
+  }
+
+  function handleDrop(e: DragEvent): void {
+    e.preventDefault();
+    isDragging = false;
+    const dropped = e.dataTransfer?.files?.[0];
+    if (dropped) {
+      newFile = dropped;
+      previewUrl = URL.createObjectURL(dropped);
     }
   }
 
@@ -182,13 +194,31 @@
 
           <div>
             <p class="mb-1 font-display text-xs font-semibold text-[#333333]">Fotografía del objeto</p>
-            <div class="flex items-center gap-3 rounded-2xl border border-[#ECECEC] bg-[#F5F5F7] p-3">
+            <div
+              class={`flex items-center gap-3 rounded-2xl border border-dashed p-3 transition-all duration-200 ${
+                isDragging ? "shimmer-border scale-[1.01] bg-white" : "border-[#ECECEC] bg-[#F5F5F7]"
+              }`}
+              role="region"
+              aria-label="Zona para cambiar la fotografía del objeto"
+              ondragenter={(e) => {
+                e.preventDefault();
+                isDragging = true;
+              }}
+              ondragover={(e) => {
+                e.preventDefault();
+                isDragging = true;
+              }}
+              ondragleave={(e) => {
+                if (e.currentTarget === e.target) isDragging = false;
+              }}
+              ondrop={handleDrop}
+            >
               {#if previewUrl}
-                <img src={previewUrl} alt="" class="h-14 w-14 shrink-0 rounded-lg object-cover" />
+                <img src={previewUrl} alt="" class="animate-preview-in h-14 w-14 shrink-0 rounded-lg object-cover" />
               {/if}
               <div class="min-w-0 flex-1">
                 <p class="truncate font-display text-xs text-[#333333]">{newFile?.name ?? "Fotografía actual del reporte"}</p>
-                <label class="mt-1 inline-flex cursor-pointer rounded-full bg-white px-3 py-1 font-display text-[11px] font-semibold text-[#333333] hover:bg-[#ECECEC] transition-colors">
+                <label class="mt-1 inline-flex cursor-pointer rounded-full bg-white px-3 py-1 font-display text-[11px] font-semibold text-[#333333] transition-all duration-150 hover:bg-[#ECECEC] focus-within:ring-2 focus-within:ring-[#4F1F91] active:scale-95">
                   Cambiar imagen
                   <input type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" onchange={handleFileInput} />
                 </label>
@@ -201,7 +231,7 @@
         <div class="sticky bottom-0 mt-4 flex flex-col-reverse gap-2 border-t border-[#ECECEC] bg-white/95 backdrop-blur pt-3 sm:flex-row sm:items-center">
           <button
             type="button"
-            class="rounded-full bg-[#F5F5F7] px-5 py-2.5 font-display text-sm font-semibold text-[#555555] hover:bg-[#ECECEC] transition-colors"
+            class="rounded-full bg-[#F5F5F7] px-5 py-2.5 font-display text-sm font-semibold text-[#555555] transition-all duration-150 hover:bg-[#ECECEC] focus-porple active:scale-[0.98]"
             onclick={close}
           >
             Cancelar
@@ -209,14 +239,14 @@
           <div class="flex flex-1 flex-col gap-2 sm:flex-row sm:justify-end">
             <button
               type="button"
-              class="rounded-full bg-[#FEF2F2] px-5 py-2.5 font-display text-sm font-semibold text-[#DC2626] hover:bg-[#FEE2E2] transition-colors"
+              class="rounded-full bg-[#FEF2F2] px-5 py-2.5 font-display text-sm font-semibold text-[#DC2626] transition-all duration-150 hover:bg-[#FEE2E2] focus-porple active:scale-[0.98]"
               onclick={() => (confirmOpen = true)}
             >
               Eliminar
             </button>
             <button
               type="submit"
-              class="rounded-full bg-[#000000] px-5 py-2.5 font-display text-sm font-semibold text-white hover:bg-[#330085] transition-colors disabled:opacity-60"
+              class="rounded-full bg-[#000000] px-5 py-2.5 font-display text-sm font-semibold text-white transition-all duration-150 hover:bg-[#330085] focus-porple active:scale-[0.98] disabled:opacity-60"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Guardando…" : "Guardar cambios"}

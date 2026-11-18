@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Item } from "$lib/types";
   import { statusLabels } from "$lib/api";
-  import { toasts } from "$lib/toast.svelte";
+  import { spotlight, reveal } from "$lib/actions/motion";
 
   interface Props {
     item: Item;
@@ -14,15 +14,46 @@
   let { item, onEdit, onDelete, onView, onMarkReturned }: Props = $props();
 
   const status = $derived(statusLabels(item.estado));
+  const isActive = $derived(item.estado !== "entregado");
+
+  // Progressive enhancement: with JS disabled, ?detailId= opens the same modal.
+  const detailHref = $derived(`/feed?detailId=${item.id}`);
+
+  // Clicking anywhere on the card (image, badge, title, metadata, body) is
+  // captured by the stretched link below. Editar / Devuelto / Eliminar call
+  // event.stopPropagation() so they never open the detail modal.
+  function handleCardClick(event: MouseEvent): void {
+    event.preventDefault();
+    onView?.();
+  }
 </script>
 
-<article class="group overflow-hidden rounded-3xl border border-[#ECECEC] bg-white shadow-sm transition-shadow duration-200 hover:shadow-md hover:border-[#4F1F91]/40 focus-within:border-[#4F1F91]">
+<article
+  use:spotlight
+  use:reveal={{ y: 24 }}
+  class="spotlight-card group relative overflow-hidden rounded-3xl border border-[#ECECEC] bg-white shadow-sm transition-[box-shadow,border-color,transform] duration-300 hover:-translate-y-1 hover:border-[#4F1F91]/40 hover:shadow-[0_24px_48px_-30px_rgba(51,0,133,0.55)] focus-within:border-[#4F1F91] cursor-pointer"
+>
+  <!-- Stretched link: the whole card is one interactive surface; anchors as a fallback without JS. -->
+  <a
+    href={detailHref}
+    tabindex="0"
+    onclick={handleCardClick}
+    class="absolute inset-0 z-10 rounded-3xl focus-porple cursor-pointer"
+    onkeydown={(e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        onView?.();
+      }
+    }}
+    aria-label={`Ver detalle de ${item.titulo}`}
+  ></a>
+
   <div class="relative aspect-[4/3] overflow-hidden bg-[#F5F5F7]">
     {#if item.foto_url}
       <img
         src={item.foto_url}
         alt={item.titulo}
-        class="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+        class="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
         loading="lazy"
       />
     {:else}
@@ -37,11 +68,16 @@
     <span
       class={`absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-display text-[10px] font-semibold uppercase tracking-wider backdrop-blur-md ${status.bg} ${status.fg}`}
     >
+      {#if isActive}
+        <span class="status-pulse h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true"></span>
+      {:else}
+        <span class="h-1.5 w-1.5 rounded-full bg-current opacity-60" aria-hidden="true"></span>
+      {/if}
       {status.label}
     </span>
   </div>
 
-  <div class="px-4 pb-4 pt-3">
+  <div class="relative px-4 pb-4 pt-3">
     <div class="flex items-start justify-between gap-2">
       <div class="min-w-0">
         <h3 class="truncate font-display text-sm font-semibold leading-tight text-black">
@@ -56,19 +92,12 @@
       </p>
     </div>
 
-    <div class="mt-3 flex items-center gap-2">
-      <button
-        type="button"
-        class="rounded-full px-3 py-1.5 font-display text-[11px] font-semibold text-[#333333] bg-[#F5F5F7] hover:bg-[#ECECEC] focus-porple transition-colors"
-        onclick={() => onView?.()}
-      >
-        Ver detalle
-      </button>
+    <div class="mt-3 flex flex-wrap items-center justify-end gap-1.5 border-t border-[#F5F5F7] pt-3 relative z-20">
       {#if onEdit}
         <button
           type="button"
-          class="rounded-full px-3 py-1.5 font-display text-[11px] font-semibold text-white bg-[#000000] hover:bg-[#330085] focus-porple transition-colors"
-          onclick={() => onEdit?.()}
+          class="rounded-full bg-[#000000] px-3 py-1.5 font-display text-[11px] font-semibold text-white transition-all duration-150 hover:bg-[#330085] focus-porple active:scale-95"
+          onclick={(event) => { event.preventDefault(); event.stopPropagation(); onEdit?.(); }}
         >
           Editar
         </button>
@@ -76,8 +105,8 @@
       {#if item.estado !== "entregado" && onMarkReturned}
         <button
           type="button"
-          class="rounded-full px-3 py-1.5 font-display text-[11px] font-semibold text-[#059669] bg-[#ECFDF5] hover:bg-[#D1FAE5] focus-porple transition-colors"
-          onclick={() => onMarkReturned?.()}
+          class="rounded-full bg-[#ECFDF5] px-3 py-1.5 font-display text-[11px] font-semibold text-[#059669] transition-all duration-150 hover:bg-[#D1FAE5] focus-porple active:scale-95"
+          onclick={(event) => { event.preventDefault(); event.stopPropagation(); onMarkReturned?.(); }}
         >
           Devuelto
         </button>
@@ -85,8 +114,8 @@
       {#if onDelete}
         <button
           type="button"
-          class="ml-auto rounded-full px-3 py-1.5 font-display text-[11px] font-semibold text-[#DC2626] bg-[#FEF2F2] hover:bg-[#FEE2E2] focus-porple transition-colors"
-          onclick={() => onDelete?.()}
+          class="rounded-full bg-[#FEF2F2] px-3 py-1.5 font-display text-[11px] font-semibold text-[#DC2626] transition-all duration-150 hover:bg-[#FEE2E2] focus-porple active:scale-95"
+          onclick={(event) => { event.preventDefault(); event.stopPropagation(); onDelete?.(); }}
         >
           Eliminar
         </button>
